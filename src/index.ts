@@ -27,24 +27,22 @@ FrontExport.listInboxes()
 
 
 FrontExport.listInboxes()
-    .then(inboxes => {
-        const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb');
-        if (inboxToExport) {
-            //return FrontExport.exportInboxConversations(inboxToExport, options)
-            return FrontExport.exportSearchConversations('"google"', {after: 1704067200}, ['open'], options)
+/*
+.then(inboxes => {
+    const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb');
+    if (inboxToExport) {
+        //return FrontExport.exportInboxConversations(inboxToExport, options)
+        return FrontExport.exportSearchConversations('"google"', {after: 1704067200}, ['open'], options)
 
-            .then(conversations => {
-                    console.log(conversations.length);
-                });
-        } else {
-            throw new Error("Inbox with ID 'inb_ndb' not found.");
-        }
-    })
-    .catch(error => {
-        console.error("Error exporting conversations:", error);
-    });
-
-
-
-
-    exportMessage
+        .then(conversations => {
+                console.log(conversations.length);
+            });
+    } else {
+        throw new Error("Inbox with ID 'inb_ndb' not found.");
+    }
+})
+.catch(error => {
+    console.error("Error exporting conversations:", error);
+});
+*/
+//    exportMessage
