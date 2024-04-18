@@ -27,7 +27,7 @@ FrontExport.listInboxes()
 
 
 FrontExport.listInboxes()
-/*
+
 .then(inboxes => {
     const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb');
     if (inboxToExport) {
@@ -44,4 +44,4 @@ FrontExport.listInboxes()
 .catch(error => {
     console.error("Error exporting conversations:", error);
 });
-*/
+
