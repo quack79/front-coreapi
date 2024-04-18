@@ -27,7 +27,8 @@ export function exportConversation(path: string, conversation : Conversation) : 
 
 export function exportMessage(path: string, message : Message) : boolean {
     try {
-        writeFileSync(path, JSON.stringify(message));
+        console.log(message);
+        //writeFileSync(path, JSON.stringify(message));
         return true;
     } catch {
         return false;

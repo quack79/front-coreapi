@@ -3,7 +3,8 @@ import 'dotenv/config'
 
 export class FrontConnector {
     static readonly headers = {
-        Authorization: `Bearer ${process.env.API_KEY}`
+        Authorization: `Bearer ${process.env.API_KEY}`,
+        Accept: `message/rfc822`
     };
     // Aggregates API resources from a resource url and any subsequent _pagination.next urls
     public static async makePaginatedAPIRequest<T>(url : string, resources : T[] = []) : Promise<T[]> {
@@ -26,13 +27,13 @@ export class FrontConnector {
 
     public static async getAttachmentFromURL(url: string):  Promise<Buffer> {
         let response = await this.makeRateLimitedRequest('get', url);
-
         return response.body;
     }
 
     private static async makeRateLimitedRequest(method: string, url: string): Promise<NeedleResponse> {
         const options = { headers: this.headers };
         console.log(`Request: ${url}`);
+        console.log(`Headers:`, this.headers);
         let response: NeedleResponse;
         do {
             response = await needle('get', url, null, options);

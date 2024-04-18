@@ -2,8 +2,6 @@ import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment }
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment } from './helpers';
 import { FrontConnector } from './connector';
 
-// Testing logs: https://hq.frontapp.com/logs/goto/e371ec184570a54211ed7118325c4452
-
 export type ExportOptions = {
     shouldIncludeMessages: boolean, 
     shouldIncludeComments: boolean,
@@ -31,7 +29,6 @@ export class FrontExport {
     public static async exportInboxConversations(inbox : Inbox, options?: ExportOptions): Promise<Conversation[]> {
             const inboxPath = `./export/${inbox.name}`;
             const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-
             const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
 
             if (exportInbox(inboxPath, inbox)) {
@@ -77,8 +74,9 @@ export class FrontExport {
     private static async _exportConversationMessages(path: string, conversation: Conversation): Promise<Message[]> {
         const messages = await this._listConversationMessages(conversation);
         for (const message of messages) {
-            const messagePath = `${path}/${message.created_at}-message-${message.id}.json`;
-            exportMessage(messagePath, message);
+            //const messagePath = `${path}/${message.created_at}-message-${message.id}.json`;
+            const EMLmessagePath = `${path}/${message.created_at}-message-${message.id}.eml`;
+            exportMessage(EMLmessagePath, message);
         }
         return messages;
     }
