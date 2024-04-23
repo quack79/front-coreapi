@@ -2,6 +2,22 @@
 This project provides an example application that customers can use as a starting point for exporting conversations
 Similar to the import sample application, this is an ETL script, with Front as the *extract* point rather than *load*. To learn more about using this sample application, visit our [Developer Portal](https://dev.frontapp.com/docs/sample-application#conversationmessage-export-application).
 
+## Environment Setup
+
+### `install node.js`
+
+### `npm install --global yarn`
+
+### `npm install typescript --save-dev`
+
+### `yarn install`
+
+In the project directory, run:
+
+### `yarn start`
+
+To run the actual export.
+
 ## Application Structure
 
 ### `connector.ts`
@@ -18,14 +34,6 @@ Where customers can specify what they want exported through usage of `FrontExpor
 
 ### `types.ts`
 Non-exhaustive typing for responses from Front's API.  Allows for easy casting in paginated responses.
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `yarn start`
-
-Runs the export.
 
 ## Configuration
 
