@@ -27,8 +27,7 @@ export function exportConversation(path: string, conversation : Conversation) : 
 
 export function exportMessage(path: string, message : Message) : boolean {
     try {
-        console.log(message);
-        //writeFileSync(path, JSON.stringify(message));
+        writeFileSync(path, JSON.stringify(message));
         return true;
     } catch {
         return false;
@@ -48,8 +47,17 @@ export function exportAttachment(path: string, attachment : Attachment, buffer :
     try {
         // creates a directory for a messages's attachments
         mkdirSync(path, {recursive: true}); 
-
         writeFileSync(`${path}/${attachment.filename}`, buffer);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// ACTUALLY WRITE EML TO DISK
+export function exportActualMessage(messagePath: string, messageBuffer : Buffer) : boolean {
+    try {
+        writeFileSync(messagePath, messageBuffer, 'utf8');
         return true;
     } catch {
         return false;

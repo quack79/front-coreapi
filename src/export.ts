@@ -1,8 +1,6 @@
 import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment } from './types'
-import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment } from './helpers';
+import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportActualMessage } from './helpers';
 import { FrontConnector } from './connector';
-
-// Testing logs: https://hq.frontapp.com/logs/goto/e371ec184570a54211ed7118325c4452
 
 export type ExportOptions = {
     shouldIncludeMessages: boolean, 
@@ -58,9 +56,10 @@ export class FrontExport {
             exportConversation(conversationPath, conversation);
     
             if (options?.shouldIncludeMessages) {
-                const messages = await this._exportConversationMessages(conversationPath, conversation);
+                //const messages = await this._exportConversationMessages(conversationPath, conversation);
+                const messages = await this._exportActualMessages(conversationPath, conversation);
     
-                // Attachments get a directory matching the 
+                // Attachments get a directory matching the conversation id
                 if (options?.shouldIncludeAttachments) {
                     for (const message of messages) {
                         await this._exportMessageAttachments(conversationPath, message);
@@ -110,6 +109,7 @@ export class FrontExport {
         const url = `https://api2.frontapp.com/conversations/${conversation.id}/comments`;
         return FrontConnector.makePaginatedAPIRequest<Comment>(url);
     }
+
     private static _buildSearchQuery(text: string, range?: DateRange, statuses?: SearchStatus[]): string {
         let query = '';
         if (range) {
@@ -122,6 +122,7 @@ export class FrontExport {
 
         return encodeURIComponent(query);
     }
+
     private static _buildRangeQuery(range: DateRange): string {
         let query = '';
         // during is used separately of before and after
@@ -147,4 +148,17 @@ export class FrontExport {
         }
         return query;
     }
+
+    // EXPORT ACTUAL MESSAGE FROM CONVERSATION
+    private static async _exportActualMessages(path: string, conversation: Conversation): Promise<Message[]> {
+        const messages = await this._listConversationMessages(conversation);    
+        for (const message of messages) {
+            const messagePath = `${path}/${message.created_at}-${message.id}.eml`;
+            const messageUrl = `https://api2.frontapp.com/messages/${message.id}`;
+            const messageBuffer = await FrontConnector.getMessageFromURL(messageUrl);
+            exportActualMessage(messagePath, messageBuffer);
+        }
+        return messages;
+    }
+
 }

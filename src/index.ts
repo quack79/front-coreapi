@@ -31,8 +31,8 @@ FrontExport.listInboxes()
 .then(inboxes => {
     const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb');
     if (inboxToExport) {
-        //return FrontExport.exportInboxConversations(inboxToExport, options)
-        return FrontExport.exportSearchConversations('"google"', {after: 1704067200}, ['open'], options)
+        return FrontExport.exportInboxConversations(inboxToExport, options)
+        //return FrontExport.exportSearchConversations('"google"', {after: 1704067200}, ['open'], options)
 
         .then(conversations => {
                 console.log(conversations.length);

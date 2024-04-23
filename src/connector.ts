@@ -30,10 +30,15 @@ export class FrontConnector {
         return response.body;
     }
 
+    // GET MESSAGE FROM URL
+    public static async getMessageFromURL(url: string):  Promise<Buffer> {
+        let response = await this.makeRateLimitedRequest('get', url);
+        return response.body;
+    }
+
     private static async makeRateLimitedRequest(method: string, url: string): Promise<NeedleResponse> {
         const options = { headers: this.headers };
         console.log(`Request: ${url}`);
-        console.log(`Headers:`, this.headers);
         let response: NeedleResponse;
         do {
             response = await needle('get', url, null, options);
