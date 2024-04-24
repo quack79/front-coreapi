@@ -2,6 +2,21 @@ import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment }
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportActualMessage } from './helpers';
 import { FrontConnector } from './connector';
 
+
+// Winston Logging
+const winston = require('winston');
+
+const logger = winston.createLogger({
+    transports: [
+        new winston.transports.File({
+            filename: 'conversations.log',
+            level: 'info'
+        })
+    ]
+});
+// Winston Logging
+
+
 export type ExportOptions = {
     shouldIncludeMessages: boolean, 
     shouldIncludeComments: boolean,
@@ -20,6 +35,7 @@ export type DateRange = {
 export type SearchStatus = ConversationStatus | "open" | "snoozed" | "unreplied"
 
 export class FrontExport {
+
     // Lists all inboxes for the company
     public static async listInboxes(): Promise<Inbox[]> {
         return FrontConnector.makePaginatedAPIRequest<Inbox>(`https://api2.frontapp.com/inboxes`);
@@ -29,9 +45,7 @@ export class FrontExport {
     public static async exportInboxConversations(inbox : Inbox, options?: ExportOptions): Promise<Conversation[]> {
             const inboxPath = `./export/${inbox.name}`;
             const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-
             const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
-
             if (exportInbox(inboxPath, inbox)) {
                 return this._exportConversationsWithOptions(inboxConversations, inboxPath, options)
             }     
@@ -51,6 +65,12 @@ export class FrontExport {
     // used by the helpers but reflect the structure of conversations' data.
     private static async _exportConversationsWithOptions(conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
+
+            console.log(`${conversation.id}`); // Show on screen
+            logger.info(`${conversation.id}`); // Log to file
+
+            // actual export disabled for testing
+/*
             // Everything past this point nests in conversation's path
             const conversationPath = `${exportPath}/${conversation.id}`;
             exportConversation(conversationPath, conversation);
@@ -69,6 +89,7 @@ export class FrontExport {
             if (options?.shouldIncludeComments) {
                 await this._exportConversationComments(conversationPath, conversation);
             }
+ */
         }
         return conversations;
     }
