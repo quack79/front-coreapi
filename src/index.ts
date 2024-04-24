@@ -12,7 +12,7 @@ FrontExport.listInboxes()
     if (inboxToExport) {
         return FrontExport.exportInboxConversations(inboxToExport, options)
         .then(conversations => {
-                console.log(conversations.length);
+            console.log("Total:", conversations.length);
         });
     } else {
         throw new Error("Inbox with ID 'inb_ndb' not found.");
