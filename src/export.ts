@@ -105,6 +105,10 @@ export class FrontExport {
     }
 
     private static async _exportSpecificConversationsWithOptions(requiredConversations: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
+        for (const item of requiredConversations) {
+            console.log(`Export: ${item}`);
+        }
+
         for (const conversation of conversations) {
 
             console.log(`Using: ${conversation.id}`);
