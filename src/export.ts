@@ -2,7 +2,7 @@ import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment }
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportActualMessage } from './helpers';
 import { FrontConnector } from './connector';
 
-const { log2f, log2c } = require("./logger");
+const { log2f, log2c } = require("./logging");
 
 export type ExportOptions = {
     shouldIncludeMessages: boolean, 
