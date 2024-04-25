@@ -2,24 +2,7 @@ import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment }
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportActualMessage } from './helpers';
 import { FrontConnector } from './connector';
 
-// Winston Logging
-const winston = require('winston')
-
-winston.add('log2f', {
-    transports: [
-        new winston.transports.File({
-            filename: 'conversations.log',
-            level: 'info'
-        })
-    ]
-})
-
-winston.add('log2c', {
-    level: process.env.LOG_LEVEL || 'info',
-    format: winston.format.cli(),
-    transports: [new winston.transports.Console()],
-})
-// Winston Logging
+const { log2f, log2c } = require("./logger");
 
 export type ExportOptions = {
     shouldIncludeMessages: boolean, 
