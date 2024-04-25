@@ -6,9 +6,16 @@ const options : ExportOptions = {
     shouldIncludeComments: false
 }
 
+import { Logger } from "./logging";
+const log = Logger.getLogger("Export");
+
 // Load a file called "required.txt" and add contents to a new array named requiredConversations
 const fs = require('fs');
 const requiredConversations = fs.readFileSync('required.txt').toString().split("\n");
+
+for (const item of requiredConversations) {
+    log.debug(`${item}`);
+}
 
 // Export conversations matching the requiredConversations array
 FrontExport.exportSearchSpecific(requiredConversations, '"google"', { after: 1704067200 }, ['open'], options)

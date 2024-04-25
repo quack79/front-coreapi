@@ -41,7 +41,7 @@ export class FrontConnector {
 
     private static async makeRateLimitedRequest(method: string, url: string): Promise<NeedleResponse> {
         const options = { headers: this.headers };
-        log.info(`Loading...`);
+        log.info(`Reading from API...`);
         let response: NeedleResponse;
         do {
             response = await needle('get', url, null, options);
