@@ -1,9 +1,10 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { Conversation, Inbox, Message, Comment, Attachment } from './types';
 
-// Customer-defined handlers for loading the exported resources into their system
+// Handlers for saving the exported resources 
 
-export function exportInbox(path: string, inbox : Inbox) : boolean {
+// Create a directory for the Inbox
+export function exportInbox(path: string, inbox: Inbox): boolean {
     try {
         mkdirSync(path, {recursive: true});
         return true;
@@ -12,12 +13,11 @@ export function exportInbox(path: string, inbox : Inbox) : boolean {
     }
 }
 
-export function exportConversation(path: string, conversation : Conversation) : boolean {
+export function exportConversation(path: string, conversation: Conversation): boolean {
     try {
-        // creates a directory for a conversation's messages
+        // Creates parent directory for a given conversation
         mkdirSync(path, {recursive: true}); 
-
-        // write the conversation details to a file in that same directory
+        // Write the conversation details to a file in that same directory
         writeFileSync(`${path}/${conversation.id}.json`, JSON.stringify(conversation))
         return true;
     } catch {
@@ -25,7 +25,8 @@ export function exportConversation(path: string, conversation : Conversation) : 
     }
 }
 
-export function exportMessage(path: string, message : Message) : boolean {
+// Export the message content as a .json file
+export function exportMessage(path: string, message: Message): boolean {
     try {
         writeFileSync(path, JSON.stringify(message));
         return true;
@@ -34,7 +35,8 @@ export function exportMessage(path: string, message : Message) : boolean {
     }
 }
 
-export function exportComment(path: string, comment : Comment) : boolean {
+// Export the comments as a .json file
+export function exportComment(path: string, comment: Comment): boolean {
     try {
         writeFileSync(path, JSON.stringify(comment));
         return true;
@@ -43,9 +45,10 @@ export function exportComment(path: string, comment : Comment) : boolean {
     }
 }
 
-export function exportAttachment(path: string, attachment : Attachment, buffer : Buffer) : boolean {
+// Export the attachments
+export function exportAttachment(path: string, attachment: Attachment, buffer: Buffer): boolean {
     try {
-        // creates a directory for a messages's attachments
+        // Create a sub-directory for attachments
         mkdirSync(path, {recursive: true}); 
         writeFileSync(`${path}/${attachment.filename}`, buffer);
         return true;
@@ -54,8 +57,8 @@ export function exportAttachment(path: string, attachment : Attachment, buffer :
     }
 }
 
-// ACTUALLY WRITE EML TO DISK
-export function exportActualMessage(messagePath: string, messageBuffer : Buffer) : boolean {
+// Export the message content as a .eml file
+export function exportActualMessage(messagePath: string, messageBuffer: Buffer): boolean {
     try {
         writeFileSync(messagePath, messageBuffer, 'utf8');
         return true;

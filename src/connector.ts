@@ -2,13 +2,14 @@ import needle, { NeedleResponse } from 'needle'
 import 'dotenv/config'
 
 import { Logger } from "./logging";
-const log = Logger.getLogger("Connector");
+const log = Logger.getLogger("C");
 
 export class FrontConnector {
     static readonly headers = {
         Authorization: `Bearer ${process.env.API_KEY}`,
-        Accept: `message/rfc822`
+        Accept: `message/rfc822` // This is the MIME type for .eml files
     };
+    
     // Aggregates API resources from a resource url and any subsequent _pagination.next urls
     public static async makePaginatedAPIRequest<T>(url : string, resources : T[] = []) : Promise<T[]> {
         let response = await this.makeRateLimitedRequest('get', url);
@@ -33,7 +34,7 @@ export class FrontConnector {
         return response.body;
     }
 
-    // GET MESSAGE FROM URL
+    // Get the message content so it can be exported to a .eml file
     public static async getMessageFromURL(url: string):  Promise<Buffer> {
         let response = await this.makeRateLimitedRequest('get', url);
         return response.body;
@@ -65,12 +66,12 @@ export class FrontConnector {
         // https://dev.frontapp.com/docs/rate-limiting#additional-burst-rate-limiting
         if (requestsRemaining > 0) {
             const burstLimitTier = this.parseHeaderInt(res, 'x-front-tier');
-            console.log(`Tier ${burstLimitTier} resource burst limit reached`);
+            log.warn(`Tier ${burstLimitTier} resource burst limit reached`);
         }
         // Otherwise, if remaining is 0, we simply ran out of global requests.
         else {
             const globalLimit = this.parseHeaderInt(res, 'x-ratelimit-limit');
-            console.log(`Global rate limit of ${globalLimit} reached`);
+            log.warn(`Global rate limit of ${globalLimit} reached`);
         }
         // Either way, wait for retry-after
         return new Promise(resolve => {

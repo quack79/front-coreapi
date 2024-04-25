@@ -5,5 +5,5 @@ export
 sync.bat
 .vs
 package-lock.json
-required.txt
+required.json
 conversations.log
