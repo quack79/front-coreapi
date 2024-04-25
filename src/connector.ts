@@ -1,7 +1,7 @@
 import needle, { NeedleResponse } from 'needle'
 import 'dotenv/config'
 
-const { log2f, log2c } = require("./logger");
+const { log2f, log2c } = require("./logging");
 
 export class FrontConnector {
     static readonly headers = {
