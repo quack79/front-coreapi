@@ -7,10 +7,6 @@ const log2c = winston.createLogger({
     transports: [new winston.transports.Console()],
 });
 
-module.exports = log2c;
-
-
-/*
 const log2f = winston.createLogger({
     transports: [
         new winston.transports.File({
@@ -19,5 +15,7 @@ const log2f = winston.createLogger({
         })
     ]
 });
-*/
+
+module.exports = log2f, log2c;
+
 // Winston Logging

@@ -11,6 +11,8 @@ const fs = require('fs');
 const requiredConversations = fs.readFileSync('required.txt').toString().split("\n");
 
 // Export conversations matching the requiredConversations array
+
+/*
 FrontExport.listInboxes()
     .then(inboxes => {
         const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
@@ -26,7 +28,7 @@ FrontExport.listInboxes()
     .catch(error => {
         console.error("Error exporting conversations:", error);
     });
-
+*/
 
 
 // Export all conversations from a specific inbox
@@ -56,12 +58,12 @@ FrontExport.listInboxes()
 // ==============================================
 
 // Export all conversations containing the word "google" after certain date (in UNIX time format)
-/*
+
 FrontExport.exportSearchConversations('"google"', { after: 1704067200 }, ['open'], options)
 .then(conversations => {
     console.log("Total:", conversations.length);
 })
-*/
+
 
 // Export all conversations from all inboxes available to the API key
 /*

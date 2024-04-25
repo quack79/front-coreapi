@@ -2,7 +2,7 @@ import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment }
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportActualMessage } from './helpers';
 import { FrontConnector } from './connector';
 
-const log2c = require("./logging");
+const { log2c, log2f } = require("./logging");
 
 export type ExportOptions = {
     shouldIncludeMessages: boolean, 
@@ -53,8 +53,8 @@ export class FrontExport {
     private static async _exportConversationsWithOptions(conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
 
-            console.log(`${conversation.id}`); // Show on screen
-            log2c.info(`${conversation.id}`); // Log to file
+            log2c.info(`${conversation.id}`); // Show on screen
+            log2f.info(`${conversation.id}`); // Log to file
 
             // actual export disabled for testing
 /*
@@ -85,6 +85,14 @@ export class FrontExport {
     // ==============================================
     // Export specific conversations from an inbox
     // ==============================================
+    public static async exportSearchSpecific(requiredConversations: string[], searchText: string, range?: DateRange, statuses?: SearchStatus[], options?: ExportOptions): Promise<Conversation[]> {
+        const searchQuery = this._buildSearchQuery(searchText, range, statuses);
+        const searchUrl = `https://api2.frontapp.com/conversations/search/${searchQuery}`;
+        log2c.warn(`Searching for conversations...`);
+        const searchConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(searchUrl);
+        return this._exportSpecificConversationsWithOptions(requiredConversations, searchConversations, './export/search', options);
+    }
+
     public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
         const inboxPath = `./export/${inbox.name}`;
         const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
