@@ -15,10 +15,10 @@ import fs from 'fs';
 // Read the contents of 'required.txt' synchronously and split them by newline
 const requiredConversations: string[] = fs.readFileSync('required.txt', 'utf8').split("\n");
 
-log.debug(`Required???`);
+log.info(`Required???`);
 // Loop through the requiredConversations array and print each item to the console
 for (const conversation of requiredConversations) {
-    console.log(conversation);
+    log.info(`${conversation}`);
 }
 
 
