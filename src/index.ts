@@ -16,8 +16,8 @@ import fs from 'fs';
 const requiredConversations: string[] = fs.readFileSync('required.txt', 'utf8').split("\n");
 
 // Loop through the requiredConversations array and print each item to the console
-for (const conversation of requiredConversations) {
-    log.info(`Required: ${conversation}`);
+for (const item of requiredConversations) {
+    log.info(`Required: ${item}`);
 }
 
 // Export conversations matching the requiredConversations array
