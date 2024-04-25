@@ -6,9 +6,34 @@ const options : ExportOptions = {
     shouldIncludeComments: false
 }
 
+// Load a file called "required.txt" and add contents to a new array named requiredConversations
+const fs = require('fs');
+const requiredConversations = fs.readFileSync('required.txt').toString().split("\n");
+
+// Export conversations matching the requiredConversations array
+FrontExport.listInboxes()
+    .then(inboxes => {
+        const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
+        if (inboxToExport) {
+            return FrontExport.exportSpecificConversations(requiredConversations, inboxToExport, options)
+                .then(conversations => {
+                    console.log("Total:", conversations.length);
+                });
+        } else {
+            throw new Error("Inbox with ID 'inb_ndb' not found.");
+        }
+    })
+    .catch(error => {
+        console.error("Error exporting conversations:", error);
+    });
+
+
+
+// Export all conversations from a specific inbox
+/*
 FrontExport.listInboxes()
 .then(inboxes => {
-    const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export a specific Inbox
+    const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
     if (inboxToExport) {
         return FrontExport.exportInboxConversations(inboxToExport, options)
         .then(conversations => {
@@ -21,8 +46,14 @@ FrontExport.listInboxes()
 .catch(error => {
     console.error("Error exporting conversations:", error);
 });
+*/
 
 
+
+// ==============================================
+// Ignore everything below this line - these are 
+// examples of how to use the API
+// ==============================================
 
 // Export all conversations containing the word "google" after certain date (in UNIX time format)
 /*

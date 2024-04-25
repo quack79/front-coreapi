@@ -14,6 +14,12 @@ const logger = winston.createLogger({
         })
     ]
 });
+
+const logger2 = winston.createLogger({
+    level: process.env.LOG_LEVEL || 'info',
+    format: winston.format.cli(),
+    transports: [new winston.transports.Console()],
+});
 // Winston Logging
 
 
@@ -94,6 +100,74 @@ export class FrontExport {
         return conversations;
     }
 
+
+    // ==============================================
+    // Export specific conversations from an inbox
+    // ==============================================
+    public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
+        const inboxPath = `./export/${inbox.name}`;
+        const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
+        const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
+        logger2.warn(`Getting conversations...`);
+        if (exportInbox(inboxPath, inbox)) {
+            return this._exportSpecificConversationsWithOptions(requiredConversations, inboxConversations, inboxPath, options)
+        }
+        return inboxConversations;
+    }
+
+    private static async _exportSpecificConversationsWithOptions(requiredConversations: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
+        for (const conversation of conversations) {
+
+            logger2.info(`Using: ${conversation.id}`);
+
+
+                // Check if the current conversation exists in the requiredConversations array
+                if (requiredConversations.includes(conversation.id)) {
+                    // Run the additional function
+                    logger2.warn(`Specific: ${conversation.id}`);
+                }
+        
+
+            // actual export disabled for testing
+            /*
+                        // Everything past this point nests in conversation's path
+                        const conversationPath = `${exportPath}/${conversation.id}`;
+                        exportConversation(conversationPath, conversation);
+                
+                        if (options?.shouldIncludeMessages) {
+                            //const messages = await this._exportConversationMessages(conversationPath, conversation);
+                            const messages = await this._exportActualMessages(conversationPath, conversation);
+                
+                            // Attachments get a directory matching the conversation id
+                            if (options?.shouldIncludeAttachments) {
+                                for (const message of messages) {
+                                    await this._exportMessageAttachments(conversationPath, message);
+                                }     
+                            }
+                        }         
+                        if (options?.shouldIncludeComments) {
+                            await this._exportConversationComments(conversationPath, conversation);
+                        }
+             */
+        }
+        return conversations;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ==============================================
+    // Export conversation messages
+    // ==============================================
     private static async _exportConversationMessages(path: string, conversation: Conversation): Promise<Message[]> {
         const messages = await this._listConversationMessages(conversation);
         for (const message of messages) {

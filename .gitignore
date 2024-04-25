@@ -5,3 +5,4 @@ export
 sync.bat
 .vs
 package-lock.json
+required.txt
