@@ -2,8 +2,8 @@ import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment }
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportActualMessage } from './helpers';
 import { FrontConnector } from './connector';
 
-const log2c = require("./logging");
-const log2f = require("./logging");
+import { Logger } from "./logging";
+const log = Logger.getLogger("Export");
 
 export type ExportOptions = {
     shouldIncludeMessages: boolean, 
@@ -53,9 +53,8 @@ export class FrontExport {
     // used by the helpers but reflect the structure of conversations' data.
     private static async _exportConversationsWithOptions(conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
-
-            log2c.info(`${conversation.id}`); // Show on screen
-            log2f.info(`${conversation.id}`); // Log to file
+            
+            log.info(`${conversation.id}`);
 
             // actual export disabled for testing
 /*
@@ -89,7 +88,7 @@ export class FrontExport {
     public static async exportSearchSpecific(requiredConversations: string[], searchText: string, range?: DateRange, statuses?: SearchStatus[], options?: ExportOptions): Promise<Conversation[]> {
         const searchQuery = this._buildSearchQuery(searchText, range, statuses);
         const searchUrl = `https://api2.frontapp.com/conversations/search/${searchQuery}`;
-        log2c.warn(`Searching for conversations...`);
+        log.warn(`Searching for conversations...`);
         const searchConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(searchUrl);
         return this._exportSpecificConversationsWithOptions(requiredConversations, searchConversations, './export/search', options);
     }
@@ -97,7 +96,7 @@ export class FrontExport {
     public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
         const inboxPath = `./export/${inbox.name}`;
         const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-        log2c.warn(`Getting conversations...`);
+        log.warn(`Getting conversations...`);
         const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
         if (exportInbox(inboxPath, inbox)) {
             return this._exportSpecificConversationsWithOptions(requiredConversations, inboxConversations, inboxPath, options)
@@ -108,12 +107,12 @@ export class FrontExport {
     private static async _exportSpecificConversationsWithOptions(requiredConversations: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
 
-            log2c.info(`Using: ${conversation.id}`);
+            log.info(`Using: ${conversation.id}`);
 
                 // Check if the current conversation exists in the requiredConversations array
                 if (requiredConversations.includes(conversation.id)) {
                     // Run the additional function
-                    log2c.warn(`Specific: ${conversation.id}`);
+                    log.warn(`Specific: ${conversation.id}`);
                 }
 
             // actual export disabled for testing

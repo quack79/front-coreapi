@@ -1,21 +1,37 @@
 // Winston Logging
-const winston = require("winston");
+import winston = require("winston");
+import { resolve } from "path";
 
-const log2c = winston.createLogger({
-    level: "info",
-    format: winston.format.cli(),
-    transports: [new winston.transports.Console()],
-});
+export class Logger {
+    public static getLogger(label: string): winston.Logger {
+        if (!winston.loggers.has(label)) {
+            winston.loggers.add(label, {
+                transports: [Logger.consoleTransport, Logger.fileTransport],
+                format: winston.format.label({ label }),
+            });
+        }
+        return winston.loggers.get(label);
+    }
 
-const log2f = winston.createLogger({
-    transports: [
-        new winston.transports.File({
-            filename: 'conversations.log',
-            level: 'info'
-        })
-    ]
-});
+    private static logFormatTemplate(i: { level: string, message: string, [key: string]: any }): string {
+        return `${i.timestamp} ${i.level} [${i.label}] ${i.message}`;
+    }
 
-module.exports = log2f, log2c;
+    private static readonly consoleTransport = new winston.transports.Console({
+        format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.cli(),
+            winston.format.printf(Logger.logFormatTemplate),
+        ),
+    });
 
+    private static readonly fileTransport = new winston.transports.File({
+        format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.printf(Logger.logFormatTemplate),
+        ),
+        filename: resolve("./conversations.log"),
+        level: "info"
+    });
+}
 // Winston Logging
