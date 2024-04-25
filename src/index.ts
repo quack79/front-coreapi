@@ -17,14 +17,14 @@ const requiredConversations: string[] = fs.readFileSync('required.txt', 'utf8').
 
 // Loop through the requiredConversations array and print each item to the console
 for (const item of requiredConversations) {
-    log.info(`Required: ${item}`);
+    console.log(`Required: ${item}`);
 }
 
 // Export conversations matching the requiredConversations array
 FrontExport.exportSearchSpecific(requiredConversations, '"google"', { after: 1704067200 }, ['open'], options)
     .then(conversations => {
-        log.info("Number Required:", requiredConversations.length); 
-        log.info("Total Found:", conversations.length);
+        console.log("Number Required:", requiredConversations.length); 
+        console.log("Total Found:", conversations.length);
     })
 
 /*
