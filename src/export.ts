@@ -104,18 +104,21 @@ export class FrontExport {
         return inboxConversations;
     }
 
-    private static async _exportSpecificConversationsWithOptions(requiredConversations: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
-        for (const item of requiredConversations) {
-            console.log(`Export: ${item}`);
-        }
+
+        
+
+
+
+
+
+    private static async _exportSpecificConversationsWithOptions(conversationsRequired: string[], conversations: Conversation[], exportPath: string, options ?: ExportOptions): Promise < Conversation[] > {
 
         for (const conversation of conversations) {
-
             console.log(`Using: ${conversation.id}`);
-            console.log("Conversation details:", JSON.stringify(conversation));
+            //console.log("Conversation details:", JSON.stringify(conversation));
 
             // Check if the current conversation exists in the requiredConversations array
-            if (requiredConversations.includes(conversation.id)) {
+            if (conversationsRequired.includes(conversation.id)) {
                 console.log(`Matches: ${conversation.id}`);
             }
 
