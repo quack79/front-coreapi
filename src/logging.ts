@@ -14,12 +14,11 @@ export class Logger {
     }
 
     private static logFormatTemplate(i: { level: string, message: string, [key: string]: any }): string {
-        return `${i.timestamp} ${i.level} [${i.label}] ${i.message}`;
+        return `${i.level} [${i.label}] ${i.message}`;
     }
 
     private static readonly consoleTransport = new winston.transports.Console({
         format: winston.format.combine(
-            winston.format.timestamp(),
             winston.format.cli(),
             winston.format.printf(Logger.logFormatTemplate),
         ),
@@ -27,7 +26,6 @@ export class Logger {
 
     private static readonly fileTransport = new winston.transports.File({
         format: winston.format.combine(
-            winston.format.timestamp(),
             winston.format.printf(Logger.logFormatTemplate),
         ),
         filename: resolve("./conversations.log"),

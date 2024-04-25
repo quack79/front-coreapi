@@ -108,12 +108,13 @@ export class FrontExport {
         for (const conversation of conversations) {
 
             log.info(`Using: ${conversation.id}`);
+            log.debug(`${requiredConversations}`);
 
-                // Check if the current conversation exists in the requiredConversations array
-                if (requiredConversations.includes(conversation.id)) {
-                    // Run the additional function
-                    log.warn(`Specific: ${conversation.id}`);
-                }
+            // Check if the current conversation exists in the requiredConversations array
+            if (requiredConversations.includes(conversation.id)) {
+                // Run the additional function
+                log.warn(`Specific: ${conversation.id}`);
+            }
 
             // actual export disabled for testing
             /*
