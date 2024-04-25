@@ -112,6 +112,7 @@ export class FrontExport {
         for (const conversation of conversations) {
 
             console.log(`Using: ${conversation.id}`);
+            console.log("Conversation details:", JSON.stringify(conversation));
 
             // Check if the current conversation exists in the requiredConversations array
             if (requiredConversations.includes(conversation.id)) {
