@@ -3,7 +3,7 @@ import { exportInbox, exportConversation, exportMessage, exportComment, exportAt
 import { FrontConnector } from './connector';
 
 // Winston Logging
-const { winston, transports } = require('winston')
+const winston = require('winston')
 
 winston.add('log2f', {
     transports: [
@@ -20,7 +20,6 @@ winston.add('log2c', {
     transports: [new winston.transports.Console()],
 })
 // Winston Logging
-
 
 export type ExportOptions = {
     shouldIncludeMessages: boolean, 
@@ -72,7 +71,7 @@ export class FrontExport {
         for (const conversation of conversations) {
 
             console.log(`${conversation.id}`); // Show on screen
-            log2f.info(`${conversation.id}`); // Log to file
+            winston.log2f.info(`${conversation.id}`); // Log to file
 
             // actual export disabled for testing
 /*
@@ -106,7 +105,7 @@ export class FrontExport {
     public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
         const inboxPath = `./export/${inbox.name}`;
         const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-        logger2.warn(`Getting conversations...`);
+        winston.logger2.warn(`Getting conversations...`);
         const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
         if (exportInbox(inboxPath, inbox)) {
             return this._exportSpecificConversationsWithOptions(requiredConversations, inboxConversations, inboxPath, options)
@@ -117,15 +116,13 @@ export class FrontExport {
     private static async _exportSpecificConversationsWithOptions(requiredConversations: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
 
-            logger2.info(`Using: ${conversation.id}`);
-
+            winston.logger2.info(`Using: ${conversation.id}`);
 
                 // Check if the current conversation exists in the requiredConversations array
                 if (requiredConversations.includes(conversation.id)) {
                     // Run the additional function
-                    logger2.warn(`Specific: ${conversation.id}`);
+                    winston.logger2.warn(`Specific: ${conversation.id}`);
                 }
-        
 
             // actual export disabled for testing
             /*
