@@ -15,21 +15,18 @@ import fs from 'fs';
 // Read the contents of 'required.txt' synchronously and split them by newline
 const requiredConversations: string[] = fs.readFileSync('required.txt', 'utf8').split("\n");
 
-log.info(`Required???`);
 // Loop through the requiredConversations array and print each item to the console
 for (const conversation of requiredConversations) {
     log.info(`${conversation}`);
 }
 
-
 // Export conversations matching the requiredConversations array
-/*
 FrontExport.exportSearchSpecific(requiredConversations, '"google"', { after: 1704067200 }, ['open'], options)
     .then(conversations => {
-        console.log("Required:", requiredConversations.length); 
-        console.log("Total Found:", conversations.length);
+        log.info("Required:", requiredConversations.length); 
+        log.info("Total Found:", conversations.length);
     })
-*/
+
 /*
 FrontExport.listInboxes()
     .then(inboxes => {
