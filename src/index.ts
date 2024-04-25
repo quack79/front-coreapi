@@ -10,20 +10,26 @@ import { Logger } from "./logging";
 const log = Logger.getLogger("Export");
 
 // Load a file called "required.txt" and add contents to a new array named requiredConversations
-const fs = require('fs');
-const requiredConversations = fs.readFileSync('required.txt').toString().split("\n");
+import fs from 'fs';
 
-for (const item of requiredConversations) {
-    log.debug(`${item}`);
+// Read the contents of 'required.txt' synchronously and split them by newline
+const requiredConversations: string[] = fs.readFileSync('required.txt', 'utf8').split("\n");
+
+log.debug(`Required???`);
+// Loop through the requiredConversations array and print each item to the console
+for (const conversation of requiredConversations) {
+    console.log(conversation);
 }
 
+
 // Export conversations matching the requiredConversations array
+/*
 FrontExport.exportSearchSpecific(requiredConversations, '"google"', { after: 1704067200 }, ['open'], options)
     .then(conversations => {
         console.log("Required:", requiredConversations.length); 
         console.log("Total Found:", conversations.length);
     })
-
+*/
 /*
 FrontExport.listInboxes()
     .then(inboxes => {
