@@ -107,13 +107,12 @@ export class FrontExport {
     private static async _exportSpecificConversationsWithOptions(requiredConversations: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
 
-            log.info(`Using: ${conversation}`);
+            log.info(`Using: ${conversation.id}`);
 
             // Check if the current conversation exists in the requiredConversations array
-            //if (requiredConversations.includes(${conversation.id})) {
-                // Run the additional function
-              //  log.warn(`Matches: ${conversation.id}`);
-            //}
+            if (requiredConversations.includes(conversation.id)) {
+                log.warn(`Matches: ${conversation.id}`);
+            }
 
             // actual export disabled for testing
             /*
