@@ -13,7 +13,8 @@ const requiredConversations = fs.readFileSync('required.txt').toString().split("
 // Export conversations matching the requiredConversations array
 FrontExport.exportSearchSpecific(requiredConversations, '"google"', { after: 1704067200 }, ['open'], options)
     .then(conversations => {
-        console.log("Total:", conversations.length);
+        console.log("Required:", requiredConversations.length); 
+        console.log("Total Found:", conversations.length);
     })
 
 /*
