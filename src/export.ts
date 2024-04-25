@@ -2,24 +2,23 @@ import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment }
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportActualMessage } from './helpers';
 import { FrontConnector } from './connector';
 
-
 // Winston Logging
-const winston = require('winston');
+const { winston, transports } = require('winston')
 
-const logger = winston.createLogger({
+winston.add('log2f', {
     transports: [
         new winston.transports.File({
             filename: 'conversations.log',
             level: 'info'
         })
     ]
-});
+})
 
-const logger2 = winston.createLogger({
+winston.add('log2c', {
     level: process.env.LOG_LEVEL || 'info',
     format: winston.format.cli(),
     transports: [new winston.transports.Console()],
-});
+})
 // Winston Logging
 
 
@@ -73,7 +72,7 @@ export class FrontExport {
         for (const conversation of conversations) {
 
             console.log(`${conversation.id}`); // Show on screen
-            logger.info(`${conversation.id}`); // Log to file
+            log2f.info(`${conversation.id}`); // Log to file
 
             // actual export disabled for testing
 /*
@@ -107,8 +106,8 @@ export class FrontExport {
     public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
         const inboxPath = `./export/${inbox.name}`;
         const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-        const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
         logger2.warn(`Getting conversations...`);
+        const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
         if (exportInbox(inboxPath, inbox)) {
             return this._exportSpecificConversationsWithOptions(requiredConversations, inboxConversations, inboxPath, options)
         }

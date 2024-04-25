@@ -1,6 +1,9 @@
 import needle, { NeedleResponse } from 'needle'
 import 'dotenv/config'
 
+const winston = require('winston');
+const logger2 = winston.get('log2c')
+
 export class FrontConnector {
     static readonly headers = {
         Authorization: `Bearer ${process.env.API_KEY}`,
@@ -38,7 +41,7 @@ export class FrontConnector {
 
     private static async makeRateLimitedRequest(method: string, url: string): Promise<NeedleResponse> {
         const options = { headers: this.headers };
-        //console.log(`Request: ${url}`);
+        logger2.warn(`Request: ${url}`);
         let response: NeedleResponse;
         do {
             response = await needle('get', url, null, options);
