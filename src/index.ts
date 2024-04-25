@@ -25,9 +25,9 @@ log.info(`Starting export...`);
 
 // Load "required.json" and add contents to a new array named requiredConversations
 const requiredConversations: string[] = JSON.parse(fs.readFileSync('required.json', 'utf8'));
+log.info(`Number Required: ${requiredConversations.length}`);
 
 // Export specific conversations from a specific inbox, for example, the inbox with ID 'inb_ndb'
-/*
 FrontExport.listInboxes()
     .then(inboxes => {
         const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
@@ -43,15 +43,14 @@ FrontExport.listInboxes()
     .catch(error => {
         console.error("Error exporting conversations:", error);
     });
-*/
 
 // Export specific conversations matching the requiredConversations array
+/*
 FrontExport.exportSearchSpecific(requiredConversations, '"google"', { after: 1704067200 }, ['open'], options)
     .then(conversations => {
-        log.info(`Total Found: ${conversations.length}`);
-        log.info(`Number Exported: ${requiredConversations.length}`);
+        log.info(`Total: ${conversations.length}`);
     })
-
+*/
 
 // ===================================================
 // These are some other examples of how to use the API
