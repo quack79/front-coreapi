@@ -54,7 +54,7 @@ export class FrontExport {
         for (const conversation of conversations) {
 
             console.log(`${conversation.id}`); // Show on screen
-            winston.log2f.info(`${conversation.id}`); // Log to file
+            log2c.info(`${conversation.id}`); // Log to file
 
             // actual export disabled for testing
 /*
@@ -88,7 +88,7 @@ export class FrontExport {
     public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
         const inboxPath = `./export/${inbox.name}`;
         const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-        winston.logger2.warn(`Getting conversations...`);
+        log2c.warn(`Getting conversations...`);
         const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
         if (exportInbox(inboxPath, inbox)) {
             return this._exportSpecificConversationsWithOptions(requiredConversations, inboxConversations, inboxPath, options)
@@ -99,12 +99,12 @@ export class FrontExport {
     private static async _exportSpecificConversationsWithOptions(requiredConversations: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
 
-            winston.logger2.info(`Using: ${conversation.id}`);
+            log2c.info(`Using: ${conversation.id}`);
 
                 // Check if the current conversation exists in the requiredConversations array
                 if (requiredConversations.includes(conversation.id)) {
                     // Run the additional function
-                    winston.logger2.warn(`Specific: ${conversation.id}`);
+                    log2c.warn(`Specific: ${conversation.id}`);
                 }
 
             // actual export disabled for testing
