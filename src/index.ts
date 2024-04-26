@@ -29,6 +29,11 @@ log.info(`Starting export...`);
 //
 // It would be nice if this code could figure out where it resume from, without  
 // human intervention but I'm not sure how to do that yet! 
+// 
+// Also, I would like to have the first run through export all the ids that will need to be exported, 
+// so that it doesn't have to hit the API on a following run. Less API calls the better!
+// In one inbox I am working with, there are over 28,000 emails and every run of the export currently
+// loads ALL of the data, every time. This is very wasteful.
 //
 
 // Load "required.json" and add contents to a new array named requiredConversations
