@@ -4,7 +4,7 @@ import fs from 'fs';
 // Set required options for the export
 const options : ExportOptions = {
     shouldIncludeMessages: true,
-    exportAsEML: true,
+    exportAsEML: true, // If this option is set to true, the messages will only be exported as.eml files
     shouldIncludeAttachments: true,
     shouldIncludeComments: false
 }

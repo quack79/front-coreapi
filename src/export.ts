@@ -63,14 +63,19 @@ export class FrontExport {
             exportConversation(conversationPath, conversation);
 
             if (options?.shouldIncludeMessages) {
-                const messages = await this._exportConversationMessages(conversationPath, conversation);
                 if (options?.exportAsEML) {
-                    const messages = await this._exportActualMessages(conversationPath, conversation);
-                }
-                // Attachments get a directory matching the conversation id
-                if (options?.shouldIncludeAttachments) {
-                    for (const message of messages) {
-                        await this._exportMessageAttachments(conversationPath, message);
+                    const messages = await this._exportMessagesAsEML(conversationPath, conversation);
+                    if (options?.shouldIncludeAttachments) {
+                        for (const message of messages) {
+                            await this._exportMessageAttachments(conversationPath, message);
+                        }
+                    }
+                } else {
+                    const messages = await this._exportConversationMessages(conversationPath, conversation);                        
+                    if (options?.shouldIncludeAttachments) {
+                        for (const message of messages) {
+                            await this._exportMessageAttachments(conversationPath, message);
+                        }
                     }
                 }
             }
@@ -118,14 +123,19 @@ export class FrontExport {
                 exportConversation(conversationPath, conversation);
 
                 if (options?.shouldIncludeMessages) {
-                    const messages = await this._exportConversationMessages(conversationPath, conversation);
                     if (options?.exportAsEML) {
-                        const messages = await this._exportActualMessages(conversationPath, conversation);
-                    }
-                    // Attachments get a directory matching the conversation id
-                    if (options?.shouldIncludeAttachments) {
-                        for (const message of messages) {
-                            await this._exportMessageAttachments(conversationPath, message);
+                        const messages = await this._exportMessagesAsEML(conversationPath, conversation);
+                        if (options?.shouldIncludeAttachments) {
+                            for (const message of messages) {
+                                await this._exportMessageAttachments(conversationPath, message);
+                            }
+                        }
+                    } else {
+                        const messages = await this._exportConversationMessages(conversationPath, conversation);                        
+                        if (options?.shouldIncludeAttachments) {
+                            for (const message of messages) {
+                                await this._exportMessageAttachments(conversationPath, message);
+                            }
                         }
                     }
                 }
@@ -163,17 +173,19 @@ export class FrontExport {
         for (const attachment of message.attachments) {
             const attachmentPath = `${path}/attachments/${message.id}`;
             const attachmentBuffer = await FrontConnector.getAttachmentFromURL(attachment.url);
+            log.info(`Request: ${attachment.url}`);
             exportAttachment(attachmentPath, attachment, attachmentBuffer);
         }
         return message.attachments;
     }
 
     // Export the message content as a .eml file
-    private static async _exportActualMessages(path: string, conversation: Conversation): Promise<Message[]> {
+    private static async _exportMessagesAsEML(path: string, conversation: Conversation): Promise<Message[]> {
         const messages = await this._listConversationMessages(conversation);
         for (const message of messages) {
             const messagePath = `${path}/${message.created_at}-${message.id}.eml`;
             const messageUrl = `https://api2.frontapp.com/messages/${message.id}`;
+            log.info(`Request: ${messageUrl}`);
             const messageBuffer = await FrontConnector.getMessageFromURL(messageUrl);
             exportActualMessage(messagePath, messageBuffer);
         }
