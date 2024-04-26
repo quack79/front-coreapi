@@ -14,14 +14,22 @@ const log = Logger.getLogger("I");
 
 log.info(`Starting export...`);
 
-// I had an issue where a very large export failed to complete, so I had to 
-// compare the ids of the conversations that were actually exported to the ids 
-// of the conversations that were required. Then I took the difference and
-// created a .json file with the missing conversation ids.
+// I had an issue where a very large export failed to complete, so I had to compare
+// the ids of the conversations that were actually exported to the ids of all
+// conversations that were required. 
 
-// https://www.htmlstrip.com/string-text-to-json-list-to-json-converter
-// Use the above link to convert the list of required ids to a JSON array, 
-// and save to a file called "required.json"
+// Probably the easiest way to do this is pipe a list of directories to a file, 
+// as they are named after the conversation id.
+
+// I used http://www.listdiff.com/ to compare the 2 lists of ids, and was left 
+// with a list of the missing ids.
+// Then I used https://www.htmlstrip.com/string-text-to-json-list-to-json-converter
+// to convert the list of required ids to JSON, and saved to a file called "required.json"
+
+//
+// It would be nice if this code could figure out where it resume from, without  
+// human intervention but I'm not sure how to do that yet! 
+//
 
 // Load "required.json" and add contents to a new array named requiredConversations
 const requiredConversations: string[] = JSON.parse(fs.readFileSync('required.json', 'utf8'));
