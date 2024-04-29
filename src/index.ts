@@ -1,5 +1,5 @@
-import { FrontExport, ExportOptions } from "./export"
-import fs from 'fs';
+import { FrontExport, ExportOptions } from "./export";
+import * as fs from 'fs';
 
 // Set required options for the export
 const options : ExportOptions = {
@@ -12,7 +12,7 @@ const options : ExportOptions = {
 import { Logger } from "./logging";
 const log = Logger.getLogger("I");
 
-log.info(`Starting export...`);
+console.log(`Welcome to The Front Exporter`);
 
 // I had an issue where a very large export failed to complete, so I had to compare
 // the ids of the conversations that were actually exported to the ids of all
@@ -36,12 +36,121 @@ log.info(`Starting export...`);
 // loads ALL of the data, every time. This is very wasteful.
 //
 
-FrontExport.listInboxes()
-    .then(inboxes => {
-        for (const inbox of inboxes) {
-            console.log(inbox.id);
-        }
+
+import yargs from 'yargs';
+
+// Define the command line options
+const myOptions = yargs
+    .command('list-inboxes', 'List all inboxes available to the API key', {}, () => {
+        listInboxes();
     })
+    .command('resume', 'Resume the export from where it left off', {}, () => {
+        resumeExport();
+    })
+    .command('export-all', 'Export all conversations from all inboxes', {}, () => {
+        exportAll();
+    })
+    .command('export-from <inboxID>', 'Export all conversations from a specific inbox', (yargs) => {
+        yargs.positional('inboxID', {
+            describe: 'The ID of the inbox',
+            type: 'string'
+        });
+    }, (argv) => {
+        const inboxID: string = argv.inboxID as string;
+        exportFromInbox(inboxID);
+    })
+    .argv;
+
+// Define the functions
+function listInboxes() {
+    // Implement listInboxes function logic here
+    console.log('List inboxes');
+}
+
+function resumeExport() {
+    // Implement resumeExport function logic here
+    console.log('Resume export');
+}
+
+function exportAll() {
+    // Implement exportAll function logic here
+    console.log('Export all');
+}
+
+function exportFromInbox(inboxID: string) {
+    // Implement exportFromInbox function logic here
+    console.log('Export from inbox: ', inboxID);
+}
+
+// use meow to display a help message
+/*
+const cli = meow(`
+    Usage
+    $ front-export [options]
+
+    Options
+    --list-inboxes  List all inboxes available to the API key
+    --resume        Resume the export from where it left off
+    --export-all    Export all conversations from all inboxes
+    --export-from <inboxID>  Export all conversations from a specific inbox, inboxID is required
+
+    Examples
+    $ front-export --list-inboxes
+    $ front-export --resume
+    $ front-export --export-all
+    $ front-export --export-from inb_abc
+`, {
+    flags: {
+        "list-inboxes": {
+            type: "boolean"
+        },
+        "resume": {
+            type: "boolean"
+        },
+        "export-all": {
+            type: "boolean"
+        },
+        "export-from": {
+            type: "string"
+         }
+    }
+});
+
+
+
+// Access the provided inboxID from the command line arguments
+const inboxID: string = cli.input[0];
+
+// Check if inboxID is provided
+if (!inboxID && !cli.flags['export-from']) {
+    console.error('Error: inboxID is required.');
+    cli.showHelp();
+    process.exit(1);
+}
+
+// If --export-from flag is provided, call the exportFromInbox function
+if (cli.flags['export-from']) {
+    exportFromInbox(cli.flags['export-from']);
+} else {
+    // Otherwise, use inboxID from positional argument
+    exportFromInbox(inboxID);
+}
+*/
+
+
+
+
+
+function listInboxes() {
+    FrontExport.listInboxes()
+        .then(inboxes => {
+            log.info(`Listing Inboxes...`);
+            for (const inbox of inboxes) {
+                console.log(inbox.id);
+            }
+        })
+}
+
 
 
 // load 2 json files called "allconvos.json" and "done.json" and compare them. if an entry in 
@@ -79,6 +188,7 @@ function resumeExport() {
     // Export specific conversations from a specific inbox, for example, the inbox with ID 'inb_ndb'
     FrontExport.listInboxes()
         .then(inboxes => {
+            log.info(`Starting export...`);
             const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
             if (inboxToExport) {
                 return FrontExport.exportSpecificConversations(requiredConversations, inboxToExport, options)
@@ -107,23 +217,23 @@ FrontExport.exportSearchSpecific(requiredConversations, '"google"', { after: 170
 // ===================================================
 
 // Export all conversations from a specific inbox, for example, the inbox with ID 'inb_ndb'
-/*
-FrontExport.listInboxes()
-.then(inboxes => {
-    const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
-    if (inboxToExport) {
-        return FrontExport.exportInboxConversations(inboxToExport, options)
-        .then(conversations => {
-            log.info(`Total: ${conversations.length}`);
-        });
-    } else {
-        throw new Error("Inbox with ID 'inb_ndb' not found.");
-    }
-})
-.catch(error => {
-    log.error("Error exporting conversations:", error);
-});
-*/
+function exportFromInbox(inboxID: string) {
+    FrontExport.listInboxes()
+    .then(inboxes => {
+        const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
+        if (inboxToExport) {
+            return FrontExport.exportInboxConversations(inboxToExport, options)
+            .then(conversations => {
+                log.info(`Total: ${conversations.length}`);
+            });
+        } else {
+            throw new Error("Inbox with ID 'inb_ndb' not found.");
+        }
+    })
+    .catch(error => {
+        log.error("Error exporting conversations:", error);
+    });
+}
 
 // Export all conversations containing the word "google" after certain date (in UNIX time format)
 /*
@@ -135,14 +245,18 @@ FrontExport.exportSearchConversations(requiredConversations, '"google"', { after
 
 // Export ALL conversations from ALL inboxes available to the API key
 // Warning: May take a very long time to complete!
-/*
-FrontExport.listInboxes()
-.then(inboxes => {
-    for (const inbox of inboxes) {
-        FrontExport.exportInboxConversations(inbox, options)
-        .then(conversations => {
-            log.info(`Total: ${conversations.length}`);
-        });
-    }
-})
-*/
+function exportAll() {
+    FrontExport.listInboxes()
+    .then(inboxes => {
+        for (const inbox of inboxes) {
+            FrontExport.exportInboxConversations(inbox, options)
+            .then(conversations => {
+                log.info(`Total: ${conversations.length}`);
+            });
+        }
+    })
+    .catch(error => {
+        log.error("Error exporting conversations:", error);
+    });
+}
+
