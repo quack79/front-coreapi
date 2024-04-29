@@ -36,22 +36,32 @@ log.info(`Starting export...`);
 // loads ALL of the data, every time. This is very wasteful.
 //
 
-import path from "path";
-function getSubdirs(dir: string): string[] {
-   return fs.readdirSync(dir).filter((file: any) => fs.statSync(path.join(dir, file)).isDirectory());
-}
-const subdirs = getSubdirs("export");
-fs.writeFileSync("done.json", JSON.stringify(subdirs));
+FrontExport.listInboxes()
+    .then(inboxes => {
+        for (const inbox of inboxes) {
+            console.log(inbox.id);
+        }
+    })
 
 
 // load 2 json files called "allconvos.json" and "done.json" and compare them. if an entry in 
 // done.json matches allconvos.json, skip it. if it doesn't, add it to a new json file called 
 // "required.json".
-const required = JSON.parse(fs.readFileSync("allconvos.json", "utf8"));
-const subdirectories = JSON.parse(fs.readFileSync("done.json", "utf8"));
-const missing = subdirectories.filter((subdir: string) => !required.includes(subdir));
-fs.writeFileSync("required.json", JSON.stringify(missing));
+import path from "path";
 
+function getSubdirs(dir: string): string[] {
+    return fs.readdirSync(dir).filter((file: any) => fs.statSync(path.join(dir, file)).isDirectory());
+}
+
+function getCurrentProgress() {
+    const subdirs = getSubdirs("export");
+    fs.writeFileSync("done.json", JSON.stringify(subdirs));
+
+    const required = JSON.parse(fs.readFileSync("allconvos.json", "utf8"));
+    const subdirectories = JSON.parse(fs.readFileSync("done.json", "utf8"));
+    const missing = subdirectories.filter((subdir: string) => !required.includes(subdir));
+    fs.writeFileSync("required.json", JSON.stringify(missing));
+}
 
 
 
@@ -62,25 +72,27 @@ fs.writeFileSync("required.json", JSON.stringify(missing));
 // Code below here works as expected.
 
 // Load "required.json" and add contents to a new array named requiredConversations
-const requiredConversations: string[] = JSON.parse(fs.readFileSync('required.json', 'utf8'));
-log.info(`Number Required: ${requiredConversations.length}`);
+function resumeExport() {
+    const requiredConversations: string[] = JSON.parse(fs.readFileSync('required.json', 'utf8'));
+    log.info(`Number Required: ${requiredConversations.length}`);
 
-// Export specific conversations from a specific inbox, for example, the inbox with ID 'inb_ndb'
-FrontExport.listInboxes()
-    .then(inboxes => {
-        const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
-        if (inboxToExport) {
-            return FrontExport.exportSpecificConversations(requiredConversations, inboxToExport, options)
-                .then(conversations => {
-                    console.log("Total:", conversations.length);
-                });
-        } else {
-            throw new Error("Inbox with ID 'inb_ndb' not found.");
-        }
-    })
-    .catch(error => {
-        console.error("Error exporting conversations:", error);
-    });
+    // Export specific conversations from a specific inbox, for example, the inbox with ID 'inb_ndb'
+    FrontExport.listInboxes()
+        .then(inboxes => {
+            const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
+            if (inboxToExport) {
+                return FrontExport.exportSpecificConversations(requiredConversations, inboxToExport, options)
+                    .then(conversations => {
+                        console.log("Total:", conversations.length);
+                    });
+            } else {
+                throw new Error("Inbox with ID 'inb_ndb' not found.");
+            }
+        })
+        .catch(error => {
+            console.error("Error exporting conversations:", error);
+        });
+}
 
 // Export specific conversations matching the requiredConversations array
 /*
