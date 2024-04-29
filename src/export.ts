@@ -1,5 +1,5 @@
 import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment } from './types'
-import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportActualMessage } from './helpers';
+import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportEMLMessage } from './helpers';
 import { FrontConnector } from './connector';
 
 import { Logger } from "./logging";
@@ -187,7 +187,7 @@ export class FrontExport {
             const messageUrl = `https://api2.frontapp.com/messages/${message.id}`;
             log.info(`Request: ${messageUrl}`);
             const messageBuffer = await FrontConnector.getMessageFromURL(messageUrl);
-            exportActualMessage(messagePath, messageBuffer);
+            exportEMLMessage(messagePath, messageBuffer);
         }
         return messages;
     }

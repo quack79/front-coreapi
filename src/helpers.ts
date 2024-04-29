@@ -58,7 +58,7 @@ export function exportAttachment(path: string, attachment: Attachment, buffer: B
 }
 
 // Export the message content as a .eml file
-export function exportActualMessage(messagePath: string, messageBuffer: Buffer): boolean {
+export function exportEMLMessage(messagePath: string, messageBuffer: Buffer): boolean {
     try {
         writeFileSync(messagePath, messageBuffer, 'utf8');
         return true;
