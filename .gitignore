@@ -6,4 +6,4 @@ sync.bat
 .vs
 package-lock.json
 required.json
-conversations.log
+debug.log

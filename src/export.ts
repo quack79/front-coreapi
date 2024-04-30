@@ -1,6 +1,8 @@
 import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment } from './types'
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportEMLMessage } from './helpers';
 import { FrontConnector } from './connector';
+import * as fs from 'fs';
+import { mkdirSync } from 'fs';
 
 import { Logger } from "./logging";
 const log = Logger.getLogger("E");
@@ -36,9 +38,21 @@ export class FrontExport {
         const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
         log.warn(`Loading conversations from API, this may take a while...`);
         const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
-        if (exportInbox(inboxPath, inbox)) {
-            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options)
+
+        // THIS IS FOR TESTING PURPOSES
+        // Export inbox conversations to JSON file
+        // Once the JSON file has been created, then we use this file to export the conversations, instead of querying the API on a resume
+        const outputFilePath = `./export/${inbox.id}.json`;
+        mkdirSync(outputFilePath, { recursive: true }); 
+        if (exportInbox(outputFilePath, inbox)) {
+            const jsonData = JSON.stringify(inboxConversations, null, 2);
+            await fs.promises.writeFile(outputFilePath, jsonData);
         }
+
+        // THIS IS THE USUAL CODE
+//        if (exportInbox(inboxPath, inbox)) {
+//            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options)
+//        }
         return inboxConversations;
     }
 
@@ -90,14 +104,6 @@ export class FrontExport {
     // ===========================================
     // Export specific conversations from an inbox
     // ===========================================
-    public static async exportSearchSpecific(requiredConversations: string[], searchText: string, range?: DateRange, statuses?: SearchStatus[], options?: ExportOptions): Promise<Conversation[]> {
-        const searchQuery = this._buildSearchQuery(searchText, range, statuses);
-        const searchUrl = `https://api2.frontapp.com/conversations/search/${searchQuery}`;
-        log.warn(`Searching API for conversations...`);
-        const searchConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(searchUrl);
-        return this._exportSpecificConversationsWithOptions(requiredConversations, searchConversations, './export/search', options);
-    }
-
     public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
         const inboxPath = `./export/${inbox.name}`;
         const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
@@ -116,7 +122,7 @@ export class FrontExport {
             // Check if the current conversation exists in the requiredConversations array
             // Export only the conversations that match the requiredConversations array
             if (conversationsRequired.includes(conversation.id)) {
-                log.warn(`Matches: ${conversation.id} - Exporting...`);
+                log.info(`Matches: ${conversation.id} - Exporting...`);
 
                 // Everything past this point nests in conversation's path
                 const conversationPath = `${exportPath}/${conversation.id}`;
@@ -173,7 +179,7 @@ export class FrontExport {
         for (const attachment of message.attachments) {
             const attachmentPath = `${path}/attachments/${message.id}`;
             const attachmentBuffer = await FrontConnector.getAttachmentFromURL(attachment.url);
-            log.info(`Request: ${attachment.url}`);
+            log.debug(`Request: ${attachment.url}`);
             exportAttachment(attachmentPath, attachment, attachmentBuffer);
         }
         return message.attachments;
@@ -185,7 +191,7 @@ export class FrontExport {
         for (const message of messages) {
             const messagePath = `${path}/${message.created_at}-${message.id}.eml`;
             const messageUrl = `https://api2.frontapp.com/messages/${message.id}`;
-            log.info(`Request: ${messageUrl}`);
+            log.debug(`Request: ${messageUrl}`);
             const messageBuffer = await FrontConnector.getMessageFromURL(messageUrl);
             exportEMLMessage(messagePath, messageBuffer);
         }

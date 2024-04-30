@@ -28,8 +28,8 @@ export class Logger {
         format: winston.format.combine(
             winston.format.printf(Logger.logFormatTemplate),
         ),
-        filename: resolve("./conversations.log"),
-        level: "info"
+        filename: resolve("./debug.log"),
+        level: "debug"
     });
 }
 // Winston Logging

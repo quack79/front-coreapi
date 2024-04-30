@@ -1,13 +1,13 @@
 import { FrontExport, ExportOptions } from "./export";
 var colors = require('colors');
-import * as fs from 'fs';
+import fs from 'fs';
 
 import { Logger } from "./logging";
-export const log = Logger.getLogger("M");
+const log = Logger.getLogger("M");
 
 // TODO: Move to .env
 // Set required options for the export
-const options : ExportOptions = {
+const options: ExportOptions = {
     shouldIncludeMessages: true,
     exportAsEML: true, // If this option is set to true, the messages will only be exported as.eml files
     shouldIncludeAttachments: true,
@@ -16,12 +16,13 @@ const options : ExportOptions = {
 
 // List all inboxes available to the API key
 export function listInboxes() {
+    log.info(`Listing Inboxes...`);
     FrontExport.listInboxes()
         .then(inboxes => {
-            log.info(`Listing Inboxes...`);
             console.log(colors.yellow.underline("ID"), "\t\t", colors.blue.underline("Name"));
             for (const inbox of inboxes) {
                 console.log(colors.yellow(inbox.id), "\t", colors.blue(inbox.name));
+                log.debug(inbox.id, inbox.name);
             }
         });
 }
@@ -52,7 +53,7 @@ function getCurrentProgress() {
 */
 
 
-
+/*
     // Load "required.json" and add contents to a new array named requiredConversations
     const requiredConversations: string[] = JSON.parse(fs.readFileSync('required.json', 'utf8'));
     log.info(`Number Required: ${requiredConversations.length}`);
@@ -62,9 +63,9 @@ function getCurrentProgress() {
     FrontExport.listInboxes()
         .then(inboxes => {
             log.info(`Starting export...`);
-            const inboxToExport = inboxes.find(inbox => inbox.id === 'inb_ndb'); // Export from a specific Inbox
+            const inboxToExport = inboxes.find(inbox => inbox.id === inboxID); // Export from a specific Inbox
             if (inboxToExport) {
-                return FrontExport.exportSpecificConversations(requiredConversations, inboxToExport, options)
+                return FrontExport.exportSpecificConversations(requiredConversations, options)
                     .then(conversations => {
                         console.log("Total:", conversations.length);
                     });
@@ -75,11 +76,12 @@ function getCurrentProgress() {
         .catch(error => {
             console.error("Error exporting conversations:", error);
         });
+*/
 }
-
+ 
 
 // Export ALL conversations from ALL inboxes available to the API key
-export function exportAll() {
+export function exportAll() {``
     // Warning: May take a very long time to complete!
     FrontExport.listInboxes()
         .then(inboxes => {

@@ -1,9 +1,9 @@
 import needle, { NeedleResponse } from 'needle'
 import 'dotenv/config'
+var colors = require('colors');
 
 import { Logger } from "./logging";
-const log = Logger.getLogger("C");
-
+export const log = Logger.getLogger("C");
 export class FrontConnector {
     static readonly headers = {
         Authorization: `Bearer ${process.env.API_KEY}`,
@@ -42,7 +42,7 @@ export class FrontConnector {
 
     private static async makeRateLimitedRequest(method: string, url: string): Promise<NeedleResponse> {
         const options = { headers: this.headers };
-        log.info(`Reading from API...`);
+        log.debug(`Querying API...`);
         let response: NeedleResponse;
         do {
             response = await needle('get', url, null, options);
@@ -66,12 +66,12 @@ export class FrontConnector {
         // https://dev.frontapp.com/docs/rate-limiting#additional-burst-rate-limiting
         if (requestsRemaining > 0) {
             const burstLimitTier = this.parseHeaderInt(res, 'x-front-tier');
-            log.warn(`Tier ${burstLimitTier} resource burst limit reached`);
+            console.log(colors.red(`Tier ${burstLimitTier} resource burst limit reached`));
         }
         // Otherwise, if remaining is 0, we simply ran out of global requests.
         else {
             const globalLimit = this.parseHeaderInt(res, 'x-ratelimit-limit');
-            log.warn(`Global rate limit of ${globalLimit} reached`);
+            console.log(colors.red(`Global rate limit of ${globalLimit} reached`));
         }
         // Either way, wait for retry-after
         return new Promise(resolve => {

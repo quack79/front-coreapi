@@ -2,9 +2,6 @@ import { listInboxes, resumeExport, exportAll, exportFromInbox } from "./main";
 import yargs from 'yargs';
 var colors = require('colors');
 
-import { Logger } from "./logging";
-export const log = Logger.getLogger("I");
-
 console.log(colors.green.bold(`Welcome to the Front Exporter`));
 
 // Define the command line options
@@ -14,8 +11,7 @@ if (process.argv.length <= 2) {
     process.exit(0);
 }
 
-const myOptions = yargs
-    .showHelpOnFail(true)
+const cmdOptions = yargs
     .command('list-inboxes', 'List all inboxes available to the API key', {}, () => {
         listInboxes();
     })
@@ -34,4 +30,9 @@ const myOptions = yargs
         const inboxID: string = argv.inboxID as string;
         exportFromInbox(inboxID);
     })
+    .help('h')
+    .alias('h', 'help')
+    .alias('help', 'h')
+    .alias('v', 'version')
+    .alias('version', 'v')
     .argv;
