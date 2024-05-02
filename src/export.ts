@@ -3,6 +3,7 @@ import { exportInbox, exportConversation, exportMessage, exportComment, exportAt
 import { FrontConnector } from './connector';
 import * as fs from 'fs';
 import { mkdirSync } from 'fs';
+var colors = require('colors');
 
 import { Logger } from "./logging";
 const log = Logger.getLogger("E");
@@ -42,25 +43,104 @@ export class FrontExport {
         // THIS IS FOR TESTING PURPOSES
         // Export inbox conversations to JSON file
         // Once the JSON file has been created, then we use this file to export the conversations, instead of querying the API on a resume
-        const outputFilePath = `./export/${inbox.id}.json`;
-        mkdirSync(outputFilePath, { recursive: true }); 
-        if (exportInbox(outputFilePath, inbox)) {
+
+        /*
+if file exists, use it to load into memory
+and start the export
+call function here
+
+if it doens't exist run the api calls and save to file
+then start the export
+call function here
+
+        
+
+        const outputFilePath = `${inboxPath}/${inbox.id}.json`;
+        try {
+            await fs.promises.access(outputFilePath);
+            console.log(colors.green(`Using existing JSON file for conversations: ${outputFilePath}`));
+            const data = fs.readFileSync(outputFilePath);
+            const localConversations = JSON.parse(data.toString());
+            if (exportInbox(inboxPath, inbox)) {
+                return this._exportConversationsWithOptions(localConversations, inboxPath, options)
+            }
+            return localConversations;
+        } catch (error) {
+            console.log(colors.green(`Exporting list of inbox conversations to: ${outputFilePath}`));
             const jsonData = JSON.stringify(inboxConversations, null, 2);
             await fs.promises.writeFile(outputFilePath, jsonData);
+            console.log(colors.green(`Exported list of inbox conversations to: ${outputFilePath}`));
+            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
         }
+
+        // THIS IS THE USUAL CODE
+if the file already exists, then we have probably hit a resume 
+and then we want to compare the exported conversations to the ones in the file
+and only export those that are not already done
+
+instead of using a file of folders, we could check if the folder already exists, if not, we need to export 
+that conversation.
+
+if it exists, skip and do next one
+
+
+
+    private static async _listConversations(conversation: Conversation): Promise<Message[]> {
+
+        return something;
+    }
+
+
+
+        */
+
+
+        const outputFilePath = `${inboxPath}/${inbox.id}.json`;
+        try {
+            await fs.promises.access(outputFilePath);
+            console.log(colors.green(`Using existing JSON file for conversations: ${outputFilePath}`));
+            const data = fs.readFileSync(outputFilePath);
+            const localConversations = JSON.parse(data.toString());
+            if (exportInbox(inboxPath, inbox)) {
+                return this._exportConversationsWithOptions(localConversations, inboxPath, options)
+            }
+            return localConversations;
+        } catch (error) {
+            console.log(colors.green(`Exporting list of inbox conversations to: ${outputFilePath}`));
+            const jsonData = JSON.stringify(inboxConversations, null, 2);
+            await fs.promises.writeFile(outputFilePath, jsonData);
+            console.log(colors.green(`Exported list of inbox conversations to: ${outputFilePath}`));
+            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
+        }
+
+
+// now we can use this file to export the conversations, instead of querying the API
+        console.log(colors.green(`Reading the json file back into memory...`));
+        const data = fs.readFileSync(outputFilePath);
+        const localConversations = JSON.parse(data.toString());
+        if (exportInbox(inboxPath, inbox)) {
+            return this._exportConversationsWithOptions(localConversations, inboxPath, options)
+        }
+        return localConversations;
+
+
 
         // THIS IS THE USUAL CODE
 //        if (exportInbox(inboxPath, inbox)) {
 //            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options)
 //        }
-        return inboxConversations;
+        //return inboxConversations;
     }
+
+
+
+
 
     // Export all conversations returned from a search query
     public static async exportSearchConversations(searchText: string, range?: DateRange, statuses?: SearchStatus[], options?: ExportOptions): Promise<Conversation[]> {
         const searchQuery = this._buildSearchQuery(searchText, range, statuses);
         const searchUrl = `https://api2.frontapp.com/conversations/search/${searchQuery}`;
-        log.warn(`Searching API for conversations...`);
+        console.log(colors.blue(`Searching API for conversations...`));
         const searchConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(searchUrl);
         return this._exportConversationsWithOptions(searchConversations, './export/search', options);
     }

@@ -10,7 +10,7 @@ const log = Logger.getLogger("M");
 const options: ExportOptions = {
     shouldIncludeMessages: true,
     exportAsEML: true, // If this option is set to true, the messages will only be exported as.eml files
-    shouldIncludeAttachments: true,
+    shouldIncludeAttachments: false,
     shouldIncludeComments: false
 }
 
@@ -81,7 +81,7 @@ function getCurrentProgress() {
  
 
 // Export ALL conversations from ALL inboxes available to the API key
-export function exportAll() {``
+export function exportAll() {
     // Warning: May take a very long time to complete!
     FrontExport.listInboxes()
         .then(inboxes => {
