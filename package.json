@@ -9,15 +9,13 @@
   "dependencies": {
     "@types/needle": "^2.5.3",
     "@types/node": "^18.11.9",
+    "@types/yargs": "^17.0.32",
     "colors": "^1.4.0",
     "dotenv": "^16.0.3",
     "needle": "^3.1.0",
     "ts-node": "^10.9.1",
-    "typescript": "^4.8.4",
+    "typescript": "^5.4.5",
     "winston": "^3.13.0",
     "yargs": "^17.7.2"
-  },
-  "devDependencies": {
-    "@types/yargs": "^17.0.32"
   }
 }
