@@ -8,7 +8,7 @@ const log = Logger.getLogger("M");
 // TODO: Move to .env
 // Set required options for the export
 const options: ExportOptions = {
-    shouldIncludeMessages: true,
+    shouldIncludeMessages: true, // Required for the next 3 options to be run
     exportAsEML: true, // If this option is set to true, the messages will only be exported as.eml files
     shouldIncludeAttachments: false,
     shouldIncludeComments: false

@@ -7,11 +7,33 @@ var colors = require('@colors/colors');
 import { Logger } from "./logging";
 const log = Logger.getLogger("E");
 
+/**
+* The export options specify whether to include messages, comments, and attachments in the export process, and whether to export messages as EML files.
+*/
 export type ExportOptions = {
-    shouldIncludeMessages: boolean, 
-    exportAsEML: boolean,
-    shouldIncludeComments: boolean,
-    shouldIncludeAttachments: boolean
+    /**
+    * Specifies whether to include messages in the export process. 
+    * @defaultValue true
+    */
+    shouldIncludeMessages?: boolean;
+
+    /**
+    * Specifies whether to export messages as EML files. Requires `shouldIncludeMessages` to be set to `true`.
+    * @defaultValue true
+    */
+    exportAsEML?: boolean;
+
+    /**
+    * Specifies whether to include comments in the export process. Requires `shouldIncludeMessages` to be set to `true`.
+    * @defaultValue false
+    */
+    shouldIncludeComments?: boolean;
+
+    /**
+    * Specifies whether to include attachments in the export process. Requires `shouldIncludeMessages` to be set to `true`.
+    * @defaultValue false
+    */
+    shouldIncludeAttachments?: boolean;
 }
 
 // Unix epoch seconds timestamps
@@ -27,39 +49,57 @@ export type SearchStatus = ConversationStatus | "open" | "snoozed" | "unreplied"
 
 export class FrontExport {
 
-    // Lists all inboxes for the company
+    /**
+    * Lists all inboxes for the company.
+    *
+    * @returns An array of inbox objects.
+    */
     public static async listInboxes(): Promise<Inbox[]> {
         return FrontConnector.makePaginatedAPIRequest<Inbox>(`https://api2.frontapp.com/inboxes`);
     }
 
-    // Export all conversations for an inbox
+    /**
+    * Exports all conversations for an inbox.
+    *
+    * @param inbox - The inbox object to export conversations from.
+    * @param options - An optional object containing export options.
+    * @returns A Promise that resolves to an array of Conversation objects.
+    */
     public static async exportInboxConversations(inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
-    const sanitizedInboxName = inbox.name.replace(/ /g, '_');
-    const inboxPath = `./export/${sanitizedInboxName}`;
-    const outputFilePath = `${inboxPath}/${inbox.id}.json`;
-    if (exportInbox(inboxPath, inbox)) {
-        // check if JSON file already exists, read it into the inboxConversations variable and run the export
-        if (fs.existsSync(outputFilePath)) {
-            console.log(colors.green(`Using existing JSON file for conversations: ${outputFilePath}`));
-            const inboxConversations = JSON.parse(fs.readFileSync(outputFilePath).toString());
-            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
+        const sanitizedInboxName = inbox.name.replace(/ /g, '_');
+        const inboxPath = `./export/${sanitizedInboxName}`;
+        const outputFilePath = `${inboxPath}/${inbox.id}.json`;
+        if (exportInbox(inboxPath, inbox)) {
+            // check if JSON file already exists, read it into the inboxConversations variable and run the export
+            if (fs.existsSync(outputFilePath)) {
+                console.log(colors.green(`Using existing JSON file for conversations: ${outputFilePath}`));
+                const inboxConversations = JSON.parse(fs.readFileSync(outputFilePath).toString());
+                return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
+            } else {
+                // if JSON file doesn't exist, call the API and save received data to disk in case there is a network error
+                const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
+                log.warn(`Loading conversations from API, this may take a while...`);
+                const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
+                console.log(colors.green(`Exporting list of inbox conversations to: ${outputFilePath}`));
+                const jsonData = JSON.stringify(inboxConversations, null, 2);
+                await fs.promises.writeFile(outputFilePath, jsonData);
+                console.log(colors.green(`Inbox conversations have been exported to: ${outputFilePath}`));
+                return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
+            }
         } else {
-            // if JSON file doesn't exist, call the API and save received data to disk in case there is a network error
-            const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-            log.warn(`Loading conversations from API, this may take a while...`);
-            const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
-            console.log(colors.green(`Exporting list of inbox conversations to: ${outputFilePath}`));
-            const jsonData = JSON.stringify(inboxConversations, null, 2);
-            await fs.promises.writeFile(outputFilePath, jsonData);
-            console.log(colors.green(`Inbox conversations have been exported to: ${outputFilePath}`));
-            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
+            throw new Error(`Unable to create directory for inbox: ${inbox.id}`);
         }
-    } else {
-        throw new Error(`Unable to create directory for inbox: ${inbox.id}`);
     }
-}
 
-    // Export all conversations returned from a search query
+    /**
+    * Exports all conversations returned from a search query.
+    *
+    * @param searchText - The search text to be used in the search query.
+    * @param range - An optional object containing date range options for the search query.
+    * @param statuses - An optional array of statuses to be included in the search query.
+    * @param options - An optional object containing export options.
+    * @returns A Promise that resolves to an array of Conversation objects.
+    */
     public static async exportSearchConversations(searchText: string, range?: DateRange, statuses?: SearchStatus[], options?: ExportOptions): Promise<Conversation[]> {
         const searchQuery = this._buildSearchQuery(searchText, range, statuses);
         const searchUrl = `https://api2.frontapp.com/conversations/search/${searchQuery}`;
@@ -69,6 +109,14 @@ export class FrontExport {
     }
 
     // Conversations are nested as files in directories, options are set in main.ts
+    /**
+    * Exports conversations with options.
+    * 
+    * @param conversations - The array of conversations to export.
+    * @param exportPath - The path where the conversations will be exported.
+    * @param options - The export options (optional).
+    * @returns A promise that resolves to an array of exported conversations.
+    */
     private static async _exportConversationsWithOptions(conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         console.log(colors.blue(`Starting export...`));
         for (const conversation of conversations) {
@@ -77,25 +125,6 @@ export class FrontExport {
             // Everything past this point nests in conversation's path
             const conversationPath = `${exportPath}/${conversation.id}`;
             exportConversation(conversationPath, conversation);
-
-            let messages: Message[] = [];
-
-
-            if (options?.shouldIncludeMessages) {
-                const messages = await this._exportConversationMessages(conversationPath, conversation);
-    
-                // Attachments get a directory matching the 
-                if (options?.shouldIncludeAttachments) {
-                    for (const message of messages) {
-                        await this._exportMessageAttachments(conversationPath, message);
-                    }     
-                }
-            }
-            if (options?.exportAsEML) {
-                const emls = await this._exportMessagesAsEML(conversationPath, conversation);
-            }
-
-
 
             if (options?.shouldIncludeMessages) {
                 if (options?.exportAsEML) {
@@ -114,18 +143,6 @@ export class FrontExport {
                     }
                 }
             }
-
-            if (options?.shouldIncludeMessages) {
-                const messages = await this._exportConversationMessages(conversationPath, conversation);  
-            }
-            if (options?.exportAsEML) {
-                const emls = await this._exportMessagesAsEML(conversationPath, conversation);
-            }
-            if (options?.shouldIncludeAttachments) {
-                for (const message of messages) {
-                    await this._exportMessageAttachments(conversationPath, message);
-                }
-            }
             if (options?.shouldIncludeComments) {
                 await this._exportConversationComments(conversationPath, conversation);
             }
@@ -133,17 +150,17 @@ export class FrontExport {
         return conversations;
     }
 
-    // ===========================================
-    // Export specific conversations from an inbox
-    // ===========================================
+    // ===================================================
+    // These functions are called when resuming the export
+    // ===================================================
     /**
-     * Exports specific conversations from an inbox.
-     *
-     * @param requiredConversations - An array of conversation IDs to be exported.
-     * @param inbox - The inbox from which to export the conversations.
-     * @param options - An object containing options for the export process.
-     * @returns A Promise that resolves to an array of Conversation objects.
-     */
+    * Exports specific conversations from an inbox.
+    *
+    * @param requiredConversations - An array of conversation IDs to be exported.
+    * @param inbox - The inbox from which to export the conversations.
+    * @param options - An object containing options for the export process.
+    * @returns A Promise that resolves to an array of Conversation objects.
+    */
     public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
         const sanitizedInboxName = inbox.name.replace(/ /g, '_');
         const inboxPath = `./export/${sanitizedInboxName}`;
@@ -157,14 +174,14 @@ export class FrontExport {
     }
 
     /**
- * Exports specific conversations from an inbox with options.
- *
- * @param conversationsRequired - An array of conversation IDs to be exported.
- * @param conversations - The array of conversations to be exported.
- * @param exportPath - The path where the conversations will be exported.
- * @param options - An object containing options for the export process.
- * @returns A Promise that resolves to an array of Conversation objects.
- */
+    * Exports specific conversations from an inbox with options.
+    *
+    * @param conversationsRequired - An array of conversation IDs to be exported.
+    * @param conversations - The array of conversations to be exported.
+    * @param exportPath - The path where the conversations will be exported.
+    * @param options - An object containing options for the export process.
+    * @returns A Promise that resolves to an array of Conversation objects.
+    */
     private static async _exportSpecificConversationsWithOptions(conversationsRequired: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
             log.info(`Using: ${conversation.id}`);
@@ -206,6 +223,13 @@ export class FrontExport {
     // ==============================================
     // Export conversation messages
     // ==============================================
+    /**
+    * Exports all messages for a conversation.
+    *
+    * @param path - The path where the conversation is located.
+    * @param conversation - The conversation from which to export messages.
+    * @returns A Promise that resolves to an array of Message objects.
+    */
     private static async _exportConversationMessages(path: string, conversation: Conversation): Promise<Message[]> {
         const messages = await this._listConversationMessages(conversation);
         for (const message of messages) {
@@ -215,6 +239,13 @@ export class FrontExport {
         return messages;
     }
 
+    /**
+    * Exports all comments for a conversation.
+    *
+    * @param path - The path where the conversation is located.
+    * @param conversation - The conversation from which to export comments.
+    * @returns A Promise that resolves to an array of Comment objects.
+    */
     private static async _exportConversationComments(path: string, conversation: Conversation): Promise<Comment[]> {
         const comments = await this._listConversationComments(conversation);
         for (const comment of comments) {
@@ -224,6 +255,13 @@ export class FrontExport {
         return comments;
     }
 
+    /**
+    * Exports all attachments for a message.
+    *
+    * @param path - The path where the conversation is located.
+    * @param message - The message from which to export attachments.
+    * @returns A Promise that resolves to an array of Attachment objects.
+    */
     private static async _exportMessageAttachments(path: string, message: Message): Promise<Attachment[]> {
         for (const attachment of message.attachments) {
             const attachmentPath = `${path}/attachments/${message.id}`;
@@ -234,7 +272,13 @@ export class FrontExport {
         return message.attachments;
     }
 
-    // Export the message content as a .eml file
+    /**
+    * Exports all messages for a conversation as .eml files.
+    *
+    * @param path - The path where the conversation is located.
+    * @param conversation - The conversation from which to export messages.
+    * @returns A Promise that resolves to an array of Message objects.
+    */
     private static async _exportMessagesAsEML(path: string, conversation: Conversation): Promise<Message[]> {
         const messages = await this._listConversationMessages(conversation);
         for (const message of messages) {
@@ -247,16 +291,36 @@ export class FrontExport {
         return messages;
     }
 
+    /**
+    * Lists all messages for a conversation.
+    *
+    * @param conversationId - The ID of the conversation to fetch messages for.
+    * @returns A Promise that resolves to an array of Message objects.
+    */
     private static async _listConversationMessages(conversation: Conversation): Promise<Message[]> {
         const url = `https://api2.frontapp.com/conversations/${conversation.id}/messages`;
         return FrontConnector.makePaginatedAPIRequest<Message>(url);
     }
 
+    /**
+    * Lists all comments for a conversation.
+    *
+    * @param conversationId - The ID of the conversation to fetch comments for.
+    * @returns A Promise that resolves to an array of Comment objects.
+    */
     private static async _listConversationComments(conversation: Conversation): Promise<Comment[]> {
         const url = `https://api2.frontapp.com/conversations/${conversation.id}/comments`;
         return FrontConnector.makePaginatedAPIRequest<Comment>(url);
     }
 
+    /**
+    * Builds a search query string based on the provided parameters.
+    *
+    * @param text - The search text to be used in the search query.
+    * @param range - An optional object containing date range options for the search query.
+    * @param statuses - An optional array of statuses to be included in the search query.
+    * @returns A string representing the search query.
+    */
     private static _buildSearchQuery(text: string, range?: DateRange, statuses?: SearchStatus[]): string {
         let query = '';
         if (range) {
@@ -270,6 +334,12 @@ export class FrontExport {
         return encodeURIComponent(query);
     }
 
+    /**
+    * Builds a range query string based on the provided parameters.
+    *
+    * @param range - An optional object containing date range options for the search query.
+    * @returns A string representing the range query.
+    */
     private static _buildRangeQuery(range: DateRange): string {
         let query = '';
         // during is used separately of before and after
@@ -288,6 +358,12 @@ export class FrontExport {
         return query;
     }
 
+    /**
+    * Builds a status query string based on the provided parameters.
+    *
+    * @param statuses - An array of statuses to be included in the search query.
+    * @returns A string representing the status query.
+    */
     private static _buildStatusQuery(statuses: SearchStatus[]): string {
         let query = '';
         for (const status of statuses) {

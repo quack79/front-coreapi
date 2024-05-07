@@ -154,7 +154,6 @@ export type Attachment = {
         is_inline: boolean;
         cid: string;
     }
-
 }
 
 export interface Comment extends Resource {
@@ -163,4 +162,3 @@ export interface Comment extends Resource {
     posted_at: number;
     attachments: [Attachment];
 }
-

@@ -4,16 +4,17 @@ var colors = require('@colors/colors');
 
 import { Logger } from "./logging";
 export const log = Logger.getLogger("C");
+
 export class FrontConnector {
     static readonly headers = {
         Authorization: `Bearer ${process.env.API_KEY}`,
         Accept: `message/rfc822` // This is the MIME type for .eml files
     };
-    
+
     // Aggregates API resources from a resource url and any subsequent _pagination.next urls
-    public static async makePaginatedAPIRequest<T>(url : string, resources : T[] = []) : Promise<T[]> {
+    public static async makePaginatedAPIRequest<T>(url: string, resources: T[] = []): Promise<T[]> {
         let response = await this.makeRateLimitedRequest('get', url);
-        
+
         // We expect _results to be an array of API resources that match the type specified
         // Caution: Runtime typecasting
         for (const item of response.body._results as T[]) {
@@ -29,17 +30,6 @@ export class FrontConnector {
         }
     }
 
-    public static async getAttachmentFromURL(url: string):  Promise<Buffer> {
-        let response = await this.makeRateLimitedRequest('get', url);
-        return response.body;
-    }
-
-    // Get the message content so it can be exported to a .eml file
-    public static async getMessageFromURL(url: string):  Promise<Buffer> {
-        let response = await this.makeRateLimitedRequest('get', url);
-        return response.body;
-    }
-
     private static async makeRateLimitedRequest(method: string, url: string): Promise<NeedleResponse> {
         const options = { headers: this.headers };
         log.debug(`Querying API... ${url}`);
@@ -51,9 +41,9 @@ export class FrontConnector {
 
         return response;
     }
-    
+
     // Please see https://dev.frontapp.com/docs/rate-limiting for additional rate-limiting details
-    private static async handleRateLimiting(res : NeedleResponse): Promise<any> {     
+    private static async handleRateLimiting(res: NeedleResponse): Promise<any> {
         const requestsRemaining = this.parseHeaderInt(res, 'x-ratelimit-remaining');
         const retryAfterMillis = 1000 * this.parseHeaderInt(res, 'retry-after');
 
@@ -79,8 +69,20 @@ export class FrontConnector {
         });
     }
 
-    private static parseHeaderInt(res : NeedleResponse, key : string) {
+    private static parseHeaderInt(res: NeedleResponse, key: string) {
         const value = res.headers[key] as string;
         return parseInt(value);
     }
+
+    public static async getAttachmentFromURL(url: string): Promise<Buffer> {
+        let response = await this.makeRateLimitedRequest('get', url);
+        return response.body;
+    }
+
+    // Get the message content so it can be exported to a .eml file
+    public static async getMessageFromURL(url: string): Promise<Buffer> {
+        let response = await this.makeRateLimitedRequest('get', url);
+        return response.body;
+    }
+
 }
