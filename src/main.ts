@@ -1,5 +1,5 @@
 import { FrontExport, ExportOptions } from "./export";
-var colors = require('colors');
+var colors = require('@colors/colors');
 import fs from 'fs';
 
 import { Logger } from "./logging";
@@ -22,7 +22,7 @@ export function listInboxes() {
             console.log(colors.yellow.underline("ID"), "\t\t", colors.blue.underline("Name"));
             for (const inbox of inboxes) {
                 console.log(colors.yellow(inbox.id), "\t", colors.blue(inbox.name));
-                log.debug(inbox.id, inbox.name);
+                log.debug(`${inbox.id} \t ${inbox.name}`);
             }
         });
 }
@@ -78,7 +78,6 @@ function getCurrentProgress() {
         });
 */
 }
- 
 
 // Export ALL conversations from ALL inboxes available to the API key
 export function exportAll() {
@@ -96,7 +95,6 @@ export function exportAll() {
             log.error("Error exporting conversations:", error);
         });
 }
-
 
 // Export all conversations from a specific inbox, for example, an inbox with ID 'inb_abc'
 export function exportFromInbox(inboxID: string) {

@@ -7,10 +7,10 @@
     "start": "ts-node ./src/index.ts"
   },
   "dependencies": {
+    "@colors/colors": "^1.6.0",
     "@types/needle": "^2.5.3",
     "@types/node": "^18.11.9",
     "@types/yargs": "^17.0.32",
-    "colors": "^1.4.0",
     "dotenv": "^16.0.3",
     "needle": "^3.1.0",
     "ts-node": "^10.9.1",

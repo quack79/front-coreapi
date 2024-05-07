@@ -1,6 +1,6 @@
 import { listInboxes, resumeExport, exportAll, exportFromInbox } from "./main";
 import yargs from 'yargs';
-var colors = require('colors');
+var colors = require('@colors/colors');
 
 console.log(colors.green.bold(`Welcome to the Front Exporter`));
 

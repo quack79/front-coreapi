@@ -2,8 +2,7 @@ import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment }
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportEMLMessage } from './helpers';
 import { FrontConnector } from './connector';
 import * as fs from 'fs';
-import { mkdirSync } from 'fs';
-var colors = require('colors');
+var colors = require('@colors/colors');
 
 import { Logger } from "./logging";
 const log = Logger.getLogger("E");
@@ -35,106 +34,30 @@ export class FrontExport {
 
     // Export all conversations for an inbox
     public static async exportInboxConversations(inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
-        const inboxPath = `./export/${inbox.name}`;
-        const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-        log.warn(`Loading conversations from API, this may take a while...`);
-        const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
-
-        // THIS IS FOR TESTING PURPOSES
-        // Export inbox conversations to JSON file
-        // Once the JSON file has been created, then we use this file to export the conversations, instead of querying the API on a resume
-
-        /*
-if file exists, use it to load into memory
-and start the export
-call function here
-
-if it doens't exist run the api calls and save to file
-then start the export
-call function here
-
-        
-
-        const outputFilePath = `${inboxPath}/${inbox.id}.json`;
-        try {
-            await fs.promises.access(outputFilePath);
+    const sanitizedInboxName = inbox.name.replace(/ /g, '_');
+    const inboxPath = `./export/${sanitizedInboxName}`;
+    const outputFilePath = `${inboxPath}/${inbox.id}.json`;
+    if (exportInbox(inboxPath, inbox)) {
+        // check if JSON file already exists, read it into the inboxConversations variable and run the export
+        if (fs.existsSync(outputFilePath)) {
             console.log(colors.green(`Using existing JSON file for conversations: ${outputFilePath}`));
-            const data = fs.readFileSync(outputFilePath);
-            const localConversations = JSON.parse(data.toString());
-            if (exportInbox(inboxPath, inbox)) {
-                return this._exportConversationsWithOptions(localConversations, inboxPath, options)
-            }
-            return localConversations;
-        } catch (error) {
+            const inboxConversations = JSON.parse(fs.readFileSync(outputFilePath).toString());
+            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
+        } else {
+            // if JSON file doesn't exist, call the API and save received data to disk in case there is a network error
+            const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
+            log.warn(`Loading conversations from API, this may take a while...`);
+            const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
             console.log(colors.green(`Exporting list of inbox conversations to: ${outputFilePath}`));
             const jsonData = JSON.stringify(inboxConversations, null, 2);
             await fs.promises.writeFile(outputFilePath, jsonData);
-            console.log(colors.green(`Exported list of inbox conversations to: ${outputFilePath}`));
+            console.log(colors.green(`Inbox conversations have been exported to: ${outputFilePath}`));
             return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
         }
-
-        // THIS IS THE USUAL CODE
-if the file already exists, then we have probably hit a resume 
-and then we want to compare the exported conversations to the ones in the file
-and only export those that are not already done
-
-instead of using a file of folders, we could check if the folder already exists, if not, we need to export 
-that conversation.
-
-if it exists, skip and do next one
-
-
-
-    private static async _listConversations(conversation: Conversation): Promise<Message[]> {
-
-        return something;
+    } else {
+        throw new Error(`Unable to create directory for inbox: ${inbox.id}`);
     }
-
-
-
-        */
-
-
-        const outputFilePath = `${inboxPath}/${inbox.id}.json`;
-        try {
-            await fs.promises.access(outputFilePath);
-            console.log(colors.green(`Using existing JSON file for conversations: ${outputFilePath}`));
-            const data = fs.readFileSync(outputFilePath);
-            const localConversations = JSON.parse(data.toString());
-            if (exportInbox(inboxPath, inbox)) {
-                return this._exportConversationsWithOptions(localConversations, inboxPath, options)
-            }
-            return localConversations;
-        } catch (error) {
-            console.log(colors.green(`Exporting list of inbox conversations to: ${outputFilePath}`));
-            const jsonData = JSON.stringify(inboxConversations, null, 2);
-            await fs.promises.writeFile(outputFilePath, jsonData);
-            console.log(colors.green(`Exported list of inbox conversations to: ${outputFilePath}`));
-            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options);
-        }
-
-
-// now we can use this file to export the conversations, instead of querying the API
-        console.log(colors.green(`Reading the json file back into memory...`));
-        const data = fs.readFileSync(outputFilePath);
-        const localConversations = JSON.parse(data.toString());
-        if (exportInbox(inboxPath, inbox)) {
-            return this._exportConversationsWithOptions(localConversations, inboxPath, options)
-        }
-        return localConversations;
-
-
-
-        // THIS IS THE USUAL CODE
-//        if (exportInbox(inboxPath, inbox)) {
-//            return this._exportConversationsWithOptions(inboxConversations, inboxPath, options)
-//        }
-        //return inboxConversations;
-    }
-
-
-
-
+}
 
     // Export all conversations returned from a search query
     public static async exportSearchConversations(searchText: string, range?: DateRange, statuses?: SearchStatus[], options?: ExportOptions): Promise<Conversation[]> {
@@ -145,16 +68,34 @@ if it exists, skip and do next one
         return this._exportConversationsWithOptions(searchConversations, './export/search', options);
     }
 
-    // Although the export helpers determine how each resource exports, this implementation
-    // focuses on nesting the related resources as files in directories.  The paths don't need to be
-    // used by the helpers but reflect the structure of conversations' data.
+    // Conversations are nested as files in directories, options are set in main.ts
     private static async _exportConversationsWithOptions(conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
+        console.log(colors.blue(`Starting export...`));
         for (const conversation of conversations) {
             log.info(`Using: ${conversation.id}`);
 
             // Everything past this point nests in conversation's path
             const conversationPath = `${exportPath}/${conversation.id}`;
             exportConversation(conversationPath, conversation);
+
+            let messages: Message[] = [];
+
+
+            if (options?.shouldIncludeMessages) {
+                const messages = await this._exportConversationMessages(conversationPath, conversation);
+    
+                // Attachments get a directory matching the 
+                if (options?.shouldIncludeAttachments) {
+                    for (const message of messages) {
+                        await this._exportMessageAttachments(conversationPath, message);
+                    }     
+                }
+            }
+            if (options?.exportAsEML) {
+                const emls = await this._exportMessagesAsEML(conversationPath, conversation);
+            }
+
+
 
             if (options?.shouldIncludeMessages) {
                 if (options?.exportAsEML) {
@@ -165,7 +106,7 @@ if it exists, skip and do next one
                         }
                     }
                 } else {
-                    const messages = await this._exportConversationMessages(conversationPath, conversation);                        
+                    const messages = await this._exportConversationMessages(conversationPath, conversation);
                     if (options?.shouldIncludeAttachments) {
                         for (const message of messages) {
                             await this._exportMessageAttachments(conversationPath, message);
@@ -173,10 +114,21 @@ if it exists, skip and do next one
                     }
                 }
             }
+
+            if (options?.shouldIncludeMessages) {
+                const messages = await this._exportConversationMessages(conversationPath, conversation);  
+            }
+            if (options?.exportAsEML) {
+                const emls = await this._exportMessagesAsEML(conversationPath, conversation);
+            }
+            if (options?.shouldIncludeAttachments) {
+                for (const message of messages) {
+                    await this._exportMessageAttachments(conversationPath, message);
+                }
+            }
             if (options?.shouldIncludeComments) {
                 await this._exportConversationComments(conversationPath, conversation);
             }
-
         }
         return conversations;
     }
@@ -184,8 +136,17 @@ if it exists, skip and do next one
     // ===========================================
     // Export specific conversations from an inbox
     // ===========================================
+    /**
+     * Exports specific conversations from an inbox.
+     *
+     * @param requiredConversations - An array of conversation IDs to be exported.
+     * @param inbox - The inbox from which to export the conversations.
+     * @param options - An object containing options for the export process.
+     * @returns A Promise that resolves to an array of Conversation objects.
+     */
     public static async exportSpecificConversations(requiredConversations: string[], inbox: Inbox, options?: ExportOptions): Promise<Conversation[]> {
-        const inboxPath = `./export/${inbox.name}`;
+        const sanitizedInboxName = inbox.name.replace(/ /g, '_');
+        const inboxPath = `./export/${sanitizedInboxName}`;
         const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
         log.warn(`Loading conversations from API, this may take a while...`);
         const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
@@ -195,6 +156,15 @@ if it exists, skip and do next one
         return inboxConversations;
     }
 
+    /**
+ * Exports specific conversations from an inbox with options.
+ *
+ * @param conversationsRequired - An array of conversation IDs to be exported.
+ * @param conversations - The array of conversations to be exported.
+ * @param exportPath - The path where the conversations will be exported.
+ * @param options - An object containing options for the export process.
+ * @returns A Promise that resolves to an array of Conversation objects.
+ */
     private static async _exportSpecificConversationsWithOptions(conversationsRequired: string[], conversations: Conversation[], exportPath: string, options?: ExportOptions): Promise<Conversation[]> {
         for (const conversation of conversations) {
             log.info(`Using: ${conversation.id}`);
@@ -217,7 +187,7 @@ if it exists, skip and do next one
                             }
                         }
                     } else {
-                        const messages = await this._exportConversationMessages(conversationPath, conversation);                        
+                        const messages = await this._exportConversationMessages(conversationPath, conversation);
                         if (options?.shouldIncludeAttachments) {
                             for (const message of messages) {
                                 await this._exportMessageAttachments(conversationPath, message);
@@ -228,7 +198,6 @@ if it exists, skip and do next one
                 if (options?.shouldIncludeComments) {
                     await this._exportConversationComments(conversationPath, conversation);
                 }
-
             }
         }
         return conversations;

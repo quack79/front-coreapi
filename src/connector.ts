@@ -1,6 +1,6 @@
 import needle, { NeedleResponse } from 'needle'
 import 'dotenv/config'
-var colors = require('colors');
+var colors = require('@colors/colors');
 
 import { Logger } from "./logging";
 export const log = Logger.getLogger("C");
