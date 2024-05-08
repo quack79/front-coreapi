@@ -1,33 +1,14 @@
-import { Conversation, ConversationStatus, Inbox, Message, Comment, Attachment } from './types'
+// https://www.npmjs.com/package/cli-progress
+
+import { Conversation, Inbox, Message, Comment, Attachment, ExportOptions, DateRange, SearchStatus } from './types'
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportEMLMessage } from './helpers';
 import { FrontConnector } from './connector';
-import * as fs from 'fs';
+import fs from 'fs-extra';
 import path from "path";
 var colors = require('@colors/colors');
 
 import { Logger } from "./logging";
 const log = Logger.getLogger("E");
-
-/**
-* The export options specify whether to include messages, comments, and attachments in the export process, and whether to export messages as EML files.
-*/
-export type ExportOptions = {
-    includeMessages?: boolean;
-    exportAsEML?: boolean;
-    includeComments?: boolean;
-    includeAttachments?: boolean;
-}
-
-// Unix epoch seconds timestamps
-export type DateRange = {
-    before?: number,
-    after?: number,
-    during?: number, // List conversations from the same day
-}
-
-// The "is:" search filter includes additional searchable statuses beyond those stored on the Conversation resource
-// Read more at https://dev.frontapp.com/docs/search-1#supported-search-filters
-export type SearchStatus = ConversationStatus | "open" | "snoozed" | "unreplied"
 
 export class FrontExport {
 
@@ -55,12 +36,9 @@ export class FrontExport {
 
         if (shouldResume) {
            log.debug(`export all with resume`);
-           log.debug(`i got here 4`);
            FrontExport.getCurrentProgress(inboxPath, outputFilePath)
-           log.debug(`i got here 3`);
-
-           
            const requiredConversations: string[] = JSON.parse(fs.readFileSync('required.json', 'utf8'));
+
            log.debug(`${inboxPath}`);
            log.info(`Number Required: ${requiredConversations.length}`);
 
@@ -178,10 +156,12 @@ export class FrontExport {
                     await this._exportConversationComments(conversationPath, conversation);
                 }
             }
+
+            FrontExport.updateProgress(exportPath, conversation.id)
+
         }
         return conversations;
     }
-
 
     /**
     * Exports all conversations returned from a search query.
@@ -350,5 +330,9 @@ export class FrontExport {
         }
         return query;
     }
+
+    private static async updateProgress(path: string, conversationid: any) {
+        await fs.outputFile(`${path}/progress.json`, `${conversationid}`, {flag: 'a'});
+      }
 
 }

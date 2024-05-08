@@ -1,4 +1,5 @@
-import { FrontExport, ExportOptions } from "./export";
+import { ExportOptions } from './types'
+import { FrontExport } from "./export";
 var colors = require('@colors/colors');
 
 import { Logger } from "./logging";

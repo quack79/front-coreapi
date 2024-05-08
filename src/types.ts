@@ -162,3 +162,21 @@ export interface Comment extends Resource {
     posted_at: number;
     attachments: [Attachment];
 }
+
+export type ExportOptions = {
+    includeMessages?: boolean;
+    exportAsEML?: boolean;
+    includeComments?: boolean;
+    includeAttachments?: boolean;
+}
+
+// Unix epoch seconds timestamps
+export type DateRange = {
+    before?: number,
+    after?: number,
+    during?: number, // List conversations from the same day
+}
+
+// The "is:" search filter includes additional searchable statuses beyond those stored on the Conversation resource
+// Read more at https://dev.frontapp.com/docs/search-1#supported-search-filters
+export type SearchStatus = ConversationStatus | "open" | "snoozed" | "unreplied"

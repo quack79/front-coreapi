@@ -10,7 +10,6 @@ export const API_KEY = env.get('API_KEY').required().asString();
 
 export class FrontConnector {
     static readonly headers = {
-        //Authorization: `Bearer ${process.env.API_KEY}`,
         Authorization: `Bearer ${API_KEY}`,
         Accept: `message/rfc822` // This is the MIME type for .eml files
     };
@@ -42,7 +41,6 @@ export class FrontConnector {
             response = await needle('get', url, null, options);
             await this.handleRateLimiting(response);
         } while (response.statusCode === 429);
-
         return response;
     }
 
@@ -88,5 +86,4 @@ export class FrontConnector {
         let response = await this.makeRateLimitedRequest('get', url);
         return response.body;
     }
-
 }
