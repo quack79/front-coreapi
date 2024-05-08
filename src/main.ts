@@ -5,13 +5,16 @@ import fs from 'fs';
 import { Logger } from "./logging";
 const log = Logger.getLogger("M");
 
-// TODO: Move to .env
-// Set required options for the export
+/**
+* The export options specify whether to include messages, comments, and attachments in the export process, and whether to export messages as EML files.
+*/
+import 'dotenv/config';
+import * as env from 'env-var';
 const options: ExportOptions = {
-    shouldIncludeMessages: true, // Required for the next 3 options to be run
-    exportAsEML: true, // If this option is set to true, the messages will only be exported as.eml files
-    shouldIncludeAttachments: false,
-    shouldIncludeComments: false
+    includeMessages: env.get('INCLUDEMESSAGES').default('true').required().asBool(),
+    exportAsEML: env.get('EXPORTASEML').default('true').required().asBool(),
+    includeAttachments: env.get('INCLUDEATTACHMENTS').default('false').required().asBool(),
+    includeComments: env.get('INCLUDECOMMENTS').default('false').required().asBool(),
 }
 
 // List all inboxes available to the API key
@@ -99,20 +102,20 @@ export function exportAll() {
 // Export all conversations from a specific inbox, for example, an inbox with ID 'inb_abc'
 export function exportFromInbox(inboxID: string) {
     FrontExport.listInboxes()
-    .then(inboxes => {
-        const inboxToExport = inboxes.find(inbox => inbox.id === inboxID); // Export from a specific Inbox
-        if (inboxToExport) {
-            return FrontExport.exportInboxConversations(inboxToExport, options)
-            .then(conversations => {
-                log.info(`Total: ${conversations.length}`);
-            });
-        } else {
-            throw new Error(`Inbox with ID ${inboxID} not found.`);
-        }
-    })
-    .catch(error => {
-        log.error("Error exporting conversations:", error);
-    });
+        .then(inboxes => {
+            const inboxToExport = inboxes.find(inbox => inbox.id === inboxID); // Export from a specific Inbox
+            if (inboxToExport) {
+                return FrontExport.exportInboxConversations(inboxToExport, options)
+                    .then(conversations => {
+                        log.info(`Total: ${conversations.length}`);
+                    });
+            } else {
+                throw new Error(`Inbox with ID ${inboxID} not found.`);
+            }
+        })
+        .catch(error => {
+            log.error("Error exporting conversations:", error);
+        });
 }
 
 // TODO: Fix this up so it accepts command line arguments, and converts date to unix timestamp

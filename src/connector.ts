@@ -1,13 +1,17 @@
-import needle, { NeedleResponse } from 'needle'
-import 'dotenv/config'
+import needle, { NeedleResponse } from 'needle';
 var colors = require('@colors/colors');
 
 import { Logger } from "./logging";
 export const log = Logger.getLogger("C");
 
+import 'dotenv/config'
+import * as env from 'env-var';
+export const API_KEY = env.get('API_KEY').required().asString();
+
 export class FrontConnector {
     static readonly headers = {
-        Authorization: `Bearer ${process.env.API_KEY}`,
+        //Authorization: `Bearer ${process.env.API_KEY}`,
+        Authorization: `Bearer ${API_KEY}`,
         Accept: `message/rfc822` // This is the MIME type for .eml files
     };
 

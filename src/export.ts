@@ -11,29 +11,10 @@ const log = Logger.getLogger("E");
 * The export options specify whether to include messages, comments, and attachments in the export process, and whether to export messages as EML files.
 */
 export type ExportOptions = {
-    /**
-    * Specifies whether to include messages in the export process. 
-    * @defaultValue true
-    */
-    shouldIncludeMessages?: boolean;
-
-    /**
-    * Specifies whether to export messages as EML files. Requires `shouldIncludeMessages` to be set to `true`.
-    * @defaultValue true
-    */
+    includeMessages?: boolean;
     exportAsEML?: boolean;
-
-    /**
-    * Specifies whether to include comments in the export process. Requires `shouldIncludeMessages` to be set to `true`.
-    * @defaultValue false
-    */
-    shouldIncludeComments?: boolean;
-
-    /**
-    * Specifies whether to include attachments in the export process. Requires `shouldIncludeMessages` to be set to `true`.
-    * @defaultValue false
-    */
-    shouldIncludeAttachments?: boolean;
+    includeComments?: boolean;
+    includeAttachments?: boolean;
 }
 
 // Unix epoch seconds timestamps
@@ -108,7 +89,7 @@ export class FrontExport {
         return this._exportConversationsWithOptions(searchConversations, './export/search', options);
     }
 
-    // Conversations are nested as files in directories, options are set in main.ts
+    // Conversations are nested as files in directories, options are set in .env
     /**
     * Exports conversations with options.
     * 
@@ -126,24 +107,24 @@ export class FrontExport {
             const conversationPath = `${exportPath}/${conversation.id}`;
             exportConversation(conversationPath, conversation);
 
-            if (options?.shouldIncludeMessages) {
+            if (options?.includeMessages) {
                 if (options?.exportAsEML) {
                     const messages = await this._exportMessagesAsEML(conversationPath, conversation);
-                    if (options?.shouldIncludeAttachments) {
+                    if (options?.includeAttachments) {
                         for (const message of messages) {
                             await this._exportMessageAttachments(conversationPath, message);
                         }
                     }
                 } else {
                     const messages = await this._exportConversationMessages(conversationPath, conversation);
-                    if (options?.shouldIncludeAttachments) {
+                    if (options?.includeAttachments) {
                         for (const message of messages) {
                             await this._exportMessageAttachments(conversationPath, message);
                         }
                     }
                 }
             }
-            if (options?.shouldIncludeComments) {
+            if (options?.includeComments) {
                 await this._exportConversationComments(conversationPath, conversation);
             }
         }
@@ -195,24 +176,24 @@ export class FrontExport {
                 const conversationPath = `${exportPath}/${conversation.id}`;
                 exportConversation(conversationPath, conversation);
 
-                if (options?.shouldIncludeMessages) {
+                if (options?.includeMessages) {
                     if (options?.exportAsEML) {
                         const messages = await this._exportMessagesAsEML(conversationPath, conversation);
-                        if (options?.shouldIncludeAttachments) {
+                        if (options?.includeAttachments) {
                             for (const message of messages) {
                                 await this._exportMessageAttachments(conversationPath, message);
                             }
                         }
                     } else {
                         const messages = await this._exportConversationMessages(conversationPath, conversation);
-                        if (options?.shouldIncludeAttachments) {
+                        if (options?.includeAttachments) {
                             for (const message of messages) {
                                 await this._exportMessageAttachments(conversationPath, message);
                             }
                         }
                     }
                 }
-                if (options?.shouldIncludeComments) {
+                if (options?.includeComments) {
                     await this._exportConversationComments(conversationPath, conversation);
                 }
             }
