@@ -5,7 +5,7 @@ var colors = require('@colors/colors');
 import { Logger } from "./logging";
 const log = Logger.getLogger("I");
 
-console.log(colors.magenta.bold(`Welcome to the Front Exporter`));
+console.log(colors.magenta.bold(`Welcome to Front Exporter`));
 
 // Define the command line options
 // if there are no arguments, display the help message

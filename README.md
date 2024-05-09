@@ -1,74 +1,73 @@
-# Front Sample Application - CoreAPI Export
-This project provides an example application that customers can use as a starting point for exporting conversations
-Similar to the import sample application, this is an ETL script, with Front as the *extract* point rather than *load*. To learn more about using this sample application, visit our [Developer Portal](https://dev.frontapp.com/docs/sample-application#conversationmessage-export-application).
+# Front Exporter
+
+**If you want to create a backup of your Front account or you want to migrate away from Front, this handy application helps you to export your messages.**
+
+The script can export all messages (including attachments and comments) to JSON files.
+
+You can also export messages to .eml files which you can import directly to your mail client.
 
 ## Environment Setup
 
-### `install node.js`
+**Clone the repo**  
+`$ git clone https://github.com/quack79/front-exporter.git`
 
-### `npm install --global yarn`
+**Install Node.js**  
+`$ install nodejs`
 
-### `npm install typescript --save-dev`
+**Install Yarn**  
+`$ npm install --global yarn`
 
-### `yarn install`
-
-In the project directory, run:
-
-### `yarn start`
-
-To run the actual export.
-
-## Application Structure
-
-### `connector.ts`
-`FrontConnector` provides a method to make generic paginated requests for API resources and handles rate-limiting.
-
-### `export.ts`
-`FrontExport` provides methods to list and export Front resources.
-
-### `helpers.ts`
-Customers are expected to manage any transforms and loading through the methods here.
-
-### `index.ts`
-Where customers can specify what they want exported through usage of `FrontExport` methods.
-
-### `types.ts`
-Non-exhaustive typing for responses from Front's API.  Allows for easy casting in paginated responses.
+**Install required dependencies**  
+`$ yarn install`
 
 ## Configuration
 
-### `.env`
+You need to set environment variables for the application by creating a `.env` text file
+in the root directory of this project.  
+There is a documented `.env.sample` file included.
 
-Put your `API_KEY` here.
 
-### `helpers.ts`
+```
+API_KEY=PasteTokenHere
+```
+- Put your `API_KEY` here.  
+If you don't have one yet, you can read how to get one from the [Developer docs](https://dev.frontapp.com/docs/create-and-revoke-api-tokens), or go directly to the [API Tokens](https://app.frontapp.com/settings/developers/tokens) page.
 
-Define your *transform* and *load* logic here.
+````
+INCLUDEMESSAGES=true
+````
+- Specifies whether to include messages in the export process.
 
-### `index.ts`
+````
+EXPORTASEML=true
+````
+- Specifies whether to export messages as EML files. Requires `shouldIncludeMessages` to be set to `true`.
 
-Logic for what will be exported here.
+````
+INCLUDEATTACHMENTS=false
+````
+- Specifies whether to include attachments in the export process. Requires `shouldIncludeMessages` to be set to `true`.
 
-TODO: Better write-up!
+````
+INCLUDECOMMENTS=false
+````
+- Specifies whether to include comments in the export process.
 
-// I had an issue where a very large export failed to complete, so I had to compare
-// the ids of the conversations that were actually exported to the ids of all
-// conversations that were required. 
+## Usage
 
-// Probably the easiest way to do this is pipe a list of directories to a file, 
-// as they are named after the conversation id.
+In the project directory, run:
 
-// I used http://www.listdiff.com/ to compare the 2 lists of ids, and was left 
-// with a list of the missing ids.
-// Then I used https://www.htmlstrip.com/string-text-to-json-list-to-json-converter
-// to convert the list of required ids to JSON, and saved to a file called "required.json"
+`$ yarn start --help`
 
-//
-// It would be nice if this code could figure out where it resume from, without  
-// human intervention but I'm not sure how to do that yet! 
-// 
-// Also, I would like to have the first run through export all the ids that will need to be exported, 
-// so that it doesn't have to hit the API on a following run. Less API calls the better!
-// In one inbox I am working with, there are over 28,000 emails and every run of the export currently
-// loads ALL of the data, every time. This is very wasteful.
-//
+````
+Command-line Options:
+  $ yarn start list-inboxes                    List all inboxes available to the API key
+  $ yarn start export-all [resume]             Export ALL conversations from ALL inboxes
+  $ yarn start export-from <inboxID> [resume]  Export all conversations from a specific inbox
+````
+
+## Example
+
+`$ yarn start list-inboxes`
+
+`$ yarn start export-from inb_abc123`
