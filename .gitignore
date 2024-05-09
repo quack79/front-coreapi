@@ -1,9 +1,4 @@
 .env
 node_modules
-.DS_Store
 export
-sync.bat
-.vs
-package-lock.json
-required.json
 debug.log
