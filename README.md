@@ -1,4 +1,5 @@
-# Front Exporter
+<img src="frontexporter.png" alt="Front Exporter">  
+
 
 **If you want to create a backup of your Front account or you want to migrate away from Front, this handy application helps you to export your messages.**
 
@@ -66,8 +67,10 @@ Command-line Options:
   $ yarn start export-from <inboxID> [resume]  Export all conversations from a specific inbox
 ````
 
+If you use the `resume` parameter, then a log file will be created and as a conversation is exported, this log will be updated. If there is an issue during an export, the application will attempt to resume from where it got to.
+
 ## Example
 
 `$ yarn start list-inboxes`
 
-`$ yarn start export-from inb_abc123`
+`$ yarn start export-from inb_abc123 resume`

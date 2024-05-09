@@ -1,7 +1,7 @@
 import { ExportOptions } from './types'
 import { FrontExport } from "./export";
-var colors = require('@colors/colors');
 
+var colors = require('@colors/colors');
 import { Logger } from "./logging";
 const log = Logger.getLogger("M");
 
@@ -55,7 +55,7 @@ export function exportFromInbox(inboxID: string, shouldResume: any) {
             if (inboxToExport) {
                 return FrontExport.exportInboxConversations(inboxToExport, options, shouldResume)
                     .then(conversations => {
-                        log.info(`Total: ${conversations.length}`);
+                        log.info(`Total Exported: ${conversations.length}`);
                     });
             } else {
                 throw new Error(`Inbox with ID ${inboxID} not found.`);
@@ -64,13 +64,4 @@ export function exportFromInbox(inboxID: string, shouldResume: any) {
         .catch(error => {
             log.error("Error exporting conversations:", error);
         });
-}
-
-// TODO: Fix this up so it accepts command line arguments, and converts date to unix timestamp
-// Export specific conversations matching the requiredConversations array
-export function exportSearch(searchArgs: string) {
-    FrontExport.exportSearchConversations('"google"', { after: 1704067200 }, ['open'], options)
-        .then(conversations => {
-            log.info(`Total: ${conversations.length}`);
-        })
 }

@@ -1,11 +1,12 @@
 import { listInboxes, exportAll, exportFromInbox } from "./main";
 import yargs from 'yargs';
-var colors = require('@colors/colors');
 
+var colors = require('@colors/colors');
 import { Logger } from "./logging";
 const log = Logger.getLogger("I");
 
 console.log(colors.magenta.bold(`Welcome to Front Exporter`));
+log.debug(`Starting Front Exporter...`);
 
 // Define the command line options
 // if there are no arguments, display the help message
@@ -38,5 +39,3 @@ const cmdOptions = yargs
     .alias('v', 'version')
     .alias('version', 'v')
     .argv;
-
-

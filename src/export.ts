@@ -1,12 +1,10 @@
-// https://www.npmjs.com/package/cli-progress
-
-import { Conversation, Inbox, Message, Comment, Attachment, ExportOptions, DateRange, SearchStatus } from './types'
+import { Conversation, Inbox, Message, Comment, Attachment, ExportOptions } from './types'
 import { exportInbox, exportConversation, exportMessage, exportComment, exportAttachment, exportEMLMessage } from './helpers';
 import { FrontConnector } from './connector';
+const cliProgress = require('cli-progress');
 import fs from 'fs-extra';
-import path from "path";
-var colors = require('@colors/colors');
 
+var colors = require('@colors/colors');
 import { Logger } from "./logging";
 const log = Logger.getLogger("E");
 
@@ -26,29 +24,23 @@ export class FrontExport {
     *
     * @param inbox - The inbox object to export conversations from.
     * @param options - An optional object containing export options.
+    * @param shouldResume - A boolean indicating whether to resume the export process from a previous state.
     * @returns A Promise that resolves to an array of Conversation objects.
     */
     public static async exportInboxConversations(inbox: Inbox, options?: ExportOptions, shouldResume?: boolean): Promise<Conversation[]> {
-        const requiredConversations = [""];
-        const sanitizedInboxName = inbox.name.replace(/ /g, '_');
-        const inboxPath = `./export/${sanitizedInboxName}`;
+        let requiredConversations: string[] = [];
+        const inboxPath = `./export/${inbox.name.replace(/ /g, '_')}`;
         const outputFilePath = `${inboxPath}/${inbox.id}.json`;
 
-        if (shouldResume) {
-           log.debug(`export all with resume`);
-           FrontExport.getCurrentProgress(inboxPath, outputFilePath)
-           const requiredConversations: string[] = JSON.parse(fs.readFileSync('required.json', 'utf8'));
-
-           log.debug(`${inboxPath}`);
-           log.info(`Number Required: ${requiredConversations.length}`);
-
-
-           if (exportInbox(inboxPath, inbox)) {
-            // check if JSON file already exists, read it into the inboxConversations variable and run the export
+        // check if a directory for the inbox exists, if not, create it
+        if (exportInbox(inboxPath, inbox)) {
             if (fs.existsSync(outputFilePath)) {
+                // check if JSON file already exists, read it into the inboxConversations array and run the export
                 console.log(colors.green(`Using existing JSON file for Export: ${outputFilePath}`));
+                log.debug(`Using existing JSON file for Export: ${outputFilePath}`);
+                requiredConversations = FrontExport.getCurrentProgress(inboxPath, outputFilePath, shouldResume);
                 const inboxConversations = JSON.parse(fs.readFileSync(outputFilePath).toString());
-                return this._exportConversationsWithOptions(inboxConversations, inboxPath, requiredConversations, options);
+                return this._exportConversationsWithOptions(inboxConversations, inboxPath, requiredConversations, shouldResume, options);
             } else {
                 // if JSON file doesn't exist, call the API and save received data to disk in case there is a network error
                 const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
@@ -57,58 +49,39 @@ export class FrontExport {
                 console.log(colors.green(`Saving list of conversations to: ${outputFilePath}`));
                 const jsonData = JSON.stringify(inboxConversations, null, 2);
                 await fs.promises.writeFile(outputFilePath, jsonData);
-                console.log(colors.yellow(`Conversations have been saved to: ${outputFilePath}`));
-                return this._exportConversationsWithOptions(inboxConversations, inboxPath, requiredConversations, options);
+                console.log(colors.green(`Conversations have been saved to: ${outputFilePath}`));
+                log.debug(`Conversations have been saved to: ${outputFilePath}`);
+                requiredConversations = FrontExport.getCurrentProgress(inboxPath, outputFilePath, shouldResume);
+                return this._exportConversationsWithOptions(inboxConversations, inboxPath, requiredConversations, shouldResume, options);
             }
         } else {
             throw new Error(`Unable to create directory for inbox: ${inbox.id}`);
         }
+    }
 
+    /**
+    * Retrieves the list of conversation IDs that are still pending in the export process.
+    *
+    * @param inboxPath - The path to the inbox directory.
+    * @param outputFilePath - The path to the output file containing all conversation IDs.
+    * @param shouldResume - A boolean indicating whether to resume the export process from a previous state.
+    * @return An array of conversation IDs that are still pending in the export process.
+    */
+    private static getCurrentProgress(inboxPath: string, outputFilePath: string, shouldResume?: boolean): string[] {
+        const allRequired = JSON.parse(fs.readFileSync(outputFilePath, "utf8"));
+        const allConversationIDs = allRequired.map((item: any) => item.id);
+        const progressFilePath = `${inboxPath}/progress.log`;
+        let conversationsLeft: string[];
+        if (fs.existsSync(progressFilePath) && shouldResume) {
+            const progressFile = fs.readFileSync(progressFilePath, "utf8")
+                .toString()
+                .split("\n")
+                .map((id) => id.trim());
+            conversationsLeft = allConversationIDs.filter((id: string) => !progressFile.includes(id));
         } else {
-            log.debug(`export all NO resume`);
-
-            if (exportInbox(inboxPath, inbox)) {
-                // check if JSON file already exists, read it into the inboxConversations variable and run the export
-                if (fs.existsSync(outputFilePath)) {
-                    console.log(colors.green(`Using existing JSON file for Export: ${outputFilePath}`));
-                    const inboxConversations = JSON.parse(fs.readFileSync(outputFilePath).toString());
-                    return this._exportConversationsWithOptions(inboxConversations, inboxPath, requiredConversations, options);
-                } else {
-                    // if JSON file doesn't exist, call the API and save received data to disk in case there is a network error
-                    const inboxConversationsUrl = `https://api2.frontapp.com/inboxes/${inbox.id}/conversations`;
-                    log.warn(`Loading conversations from API, this may take a while...`);
-                    const inboxConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(inboxConversationsUrl);
-                    console.log(colors.green(`Saving list of conversations to: ${outputFilePath}`));
-                    const jsonData = JSON.stringify(inboxConversations, null, 2);
-                    await fs.promises.writeFile(outputFilePath, jsonData);
-                    console.log(colors.yellow(`Conversations have been saved to: ${outputFilePath}`));
-                    return this._exportConversationsWithOptions(inboxConversations, inboxPath, requiredConversations, options);
-                }
-            } else {
-                throw new Error(`Unable to create directory for inbox: ${inbox.id}`);
-            }
-
-        }    
-    }
-
-
-    private static getSubdirs(dir: string): string[] {
-        return fs.readdirSync(dir).filter((file: any) => fs.statSync(path.join(dir, file)).isDirectory());
-    }
-
-    private static getCurrentProgress(inboxPath: string, outputFilePath: string) {
-
-        log.debug(`i got here 1`);
-// we need a test here if the file doesn't exist, as it errors out at the moment
-
-        const subdirs = FrontExport.getSubdirs(inboxPath);
-        fs.writeFileSync(`${inboxPath}/done.json`, JSON.stringify(subdirs));
-    
-        const required = JSON.parse(fs.readFileSync(outputFilePath, "utf8"));
-        const subdirectories = JSON.parse(fs.readFileSync(`${inboxPath}/done.json`, "utf8"));
-        const ids = subdirectories.map((subdirectory: any) => subdirectory.id);
-        const missing = ids.filter((subdir: string) => !required.includes(subdir));
-        fs.writeFileSync("required.json", JSON.stringify(missing));
+            conversationsLeft = allConversationIDs;
+        }
+        return conversationsLeft;
     }
 
     // ===================================================
@@ -121,15 +94,23 @@ export class FrontExport {
     * @param options - An object containing options for the export process.
     * @returns A Promise that resolves to an array of Conversation objects.
     */
-    private static async _exportConversationsWithOptions(conversations: Conversation[], exportPath: string, conversationsRequired: string[], options?: ExportOptions): Promise<Conversation[]> {
-        log.debug(`i got here 2`);
+    private static async _exportConversationsWithOptions(conversations: Conversation[], exportPath: string, conversationsRequired: string[], shouldResume?: boolean, options?: ExportOptions): Promise<Conversation[]> {
+        log.info(`Total to Export: ${conversationsRequired.length}`);
+        const progressBar1 = new cliProgress.SingleBar({
+            format: 'Progress |' + colors.cyan('{bar}') + '| {percentage}% | {value}/{total}',
+            barCompleteChar: '\u2588',
+            barIncompleteChar: '\u2591',
+            hideCursor: true
+        });
+        progressBar1.start(conversationsRequired.length, 0);
+
         for (const conversation of conversations) {
-            log.info(`Using: ${conversation.id}`);
+            log.debug(`Using: ${conversation.id}`);
 
             // Check if the current conversation exists in the requiredConversations array
             // Export only the conversations that match the requiredConversations array
             if (conversationsRequired.includes(conversation.id)) {
-                log.info(`Matches: ${conversation.id} - Exporting...`);
+                log.debug(`${conversation.id} is required - Exporting...`);
 
                 // Everything past this point nests in conversation's path
                 const conversationPath = `${exportPath}/${conversation.id}`;
@@ -155,30 +136,14 @@ export class FrontExport {
                 if (options?.includeComments) {
                     await this._exportConversationComments(conversationPath, conversation);
                 }
+                progressBar1.increment();
+                FrontExport.updateProgress(exportPath, conversation.id);
+            } else {
+                log.debug(`${conversation.id} not required - SKIPPING`);
             }
-
-            FrontExport.updateProgress(exportPath, conversation.id)
-
         }
+        progressBar1.stop();
         return conversations;
-    }
-
-    /**
-    * Exports all conversations returned from a search query.
-    *
-    * @param searchText - The search text to be used in the search query.
-    * @param range - An optional object containing date range options for the search query.
-    * @param statuses - An optional array of statuses to be included in the search query.
-    * @param options - An optional object containing export options.
-    * @returns A Promise that resolves to an array of Conversation objects.
-    */
-    public static async exportSearchConversations(searchText: string, range?: DateRange, statuses?: SearchStatus[], options?: ExportOptions): Promise<Conversation[]> {
-        const requiredConversations = [""];
-        const searchQuery = this._buildSearchQuery(searchText, range, statuses);
-        const searchUrl = `https://api2.frontapp.com/conversations/search/${searchQuery}`;
-        console.log(colors.blue(`Searching API for conversations...`));
-        const searchConversations = await FrontConnector.makePaginatedAPIRequest<Conversation>(searchUrl);
-        return this._exportConversationsWithOptions(searchConversations, './export/search', requiredConversations, options);
     }
 
     // ==============================================
@@ -273,66 +238,12 @@ export class FrontExport {
     }
 
     /**
-    * Builds a search query string based on the provided parameters.
-    *
-    * @param text - The search text to be used in the search query.
-    * @param range - An optional object containing date range options for the search query.
-    * @param statuses - An optional array of statuses to be included in the search query.
-    * @returns A string representing the search query.
+    * Updates the progress file for the given conversation id.
+    * @param path the path to the progress file
+    * @param conversationId the conversation id to update the progress for
     */
-    private static _buildSearchQuery(text: string, range?: DateRange, statuses?: SearchStatus[]): string {
-        let query = '';
-        if (range) {
-            query += this._buildRangeQuery(range);
-        }
-        if (statuses) {
-            query += this._buildStatusQuery(statuses);
-        }
-        query += text;
-
-        return encodeURIComponent(query);
+    private static async updateProgress(path: string, conversationId: any): Promise<void> {
+        await fs.outputFile(`${path}/progress.log`, `${conversationId}\n`, { flag: 'a' });
     }
-
-    /**
-    * Builds a range query string based on the provided parameters.
-    *
-    * @param range - An optional object containing date range options for the search query.
-    * @returns A string representing the range query.
-    */
-    private static _buildRangeQuery(range: DateRange): string {
-        let query = '';
-        // during is used separately of before and after
-        if (range.during) {
-            query += `during:${range.during} `;
-        }
-        // before and after can be used together
-        else {
-            if (range.before) {
-                query += `before:${range.before} `;
-            }
-            if (range.after) {
-                query += `after:${range.after} `;
-            }
-        }
-        return query;
-    }
-
-    /**
-    * Builds a status query string based on the provided parameters.
-    *
-    * @param statuses - An array of statuses to be included in the search query.
-    * @returns A string representing the status query.
-    */
-    private static _buildStatusQuery(statuses: SearchStatus[]): string {
-        let query = '';
-        for (const status of statuses) {
-            query += `is:${status} `;
-        }
-        return query;
-    }
-
-    private static async updateProgress(path: string, conversationid: any) {
-        await fs.outputFile(`${path}/progress.json`, `${conversationid}`, {flag: 'a'});
-      }
 
 }

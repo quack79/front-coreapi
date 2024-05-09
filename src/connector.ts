@@ -1,6 +1,6 @@
 import needle, { NeedleResponse } from 'needle';
-var colors = require('@colors/colors');
 
+var colors = require('@colors/colors');
 import { Logger } from "./logging";
 export const log = Logger.getLogger("C");
 
