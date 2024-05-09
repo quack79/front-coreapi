@@ -154,7 +154,6 @@ export type Attachment = {
         is_inline: boolean;
         cid: string;
     }
-
 }
 
 export interface Comment extends Resource {
@@ -164,3 +163,9 @@ export interface Comment extends Resource {
     attachments: [Attachment];
 }
 
+export type ExportOptions = {
+    includeMessages?: boolean;
+    exportAsEML?: boolean;
+    includeComments?: boolean;
+    includeAttachments?: boolean;
+}

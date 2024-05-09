@@ -1,29 +1,41 @@
-import { FrontExport, ExportOptions } from "./export"
+import { listInboxes, exportAll, exportFromInbox } from "./main";
+import yargs from 'yargs';
 
-const options : ExportOptions = {
-    shouldIncludeMessages: true,
-    shouldIncludeComments: true,
-    shouldIncludeAttachments: true
+var colors = require('@colors/colors');
+import { Logger } from "./logging";
+const log = Logger.getLogger("I");
+
+console.log(colors.magenta.bold(`Welcome to Front Exporter`));
+log.debug(`Starting Front Exporter...`);
+
+// Define the command line options
+// if there are no arguments, display the help message
+if (process.argv.length <= 2) {
+    yargs.showHelp();
+    process.exit(0);
 }
 
-// Export all conversations from all inboxes available to the API key
-/*
-FrontExport.listInboxes()
-.then(inboxes => {
-    for (const inbox of inboxes) {
-        FrontExport.exportInboxConversations(inbox, options)
-        .then(conversations => {
-            console.log(conversations.length);
+const cmdOptions = yargs
+    .command('list-inboxes', 'List all inboxes available to the API key', {}, () => {
+        listInboxes();
+    })
+    .command('export-all [resume]', 'Export all conversations from all inboxes', {}, (argv) => {
+        const shouldResume = argv.resume !== undefined ? argv.resume : false;
+        exportAll(shouldResume);        
+    })
+    .command('export-from <inboxID> [resume]', 'Export all conversations from a specific inbox', (yargs) => {
+        yargs.positional('inboxID', {
+            describe: 'The ID of the inbox',
+            type: 'string'
         });
-    }
-})
-*/
-
-// Open conversations, after September 13th, 2020, with the exact phrase 
-FrontExport.exportSearchConversations('"cup of coffee"', {after: 1600000000}, ['open'], options)
-.then(conversations => {
-    console.log(conversations.length);
-})
-
-
-
+    }, (argv) => {
+        const inboxID: string = argv.inboxID as string;
+        const shouldResume = argv.resume ? argv.resume : false;
+        exportFromInbox(inboxID, shouldResume);
+    })
+    .help('h')
+    .alias('h', 'help')
+    .alias('help', 'h')
+    .alias('v', 'version')
+    .alias('version', 'v')
+    .argv;
