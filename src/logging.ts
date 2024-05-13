@@ -13,20 +13,25 @@ export class Logger {
         return winston.loggers.get(label);
     }
 
-    private static logFormatTemplate(i: { level: string, message: string, [key: string]: any }): string {
+    private static logConsoleFormat(i: { level: string, message: string, [key: string]: any }): string {
         return `${i.level} [${i.label}] ${i.message}`;
+    }
+
+    private static logFileFormat(i: { level: string, message: string, [key: string]: any }): string {
+        return `${i.level} [${i.label}] ${i.timestamp} ${i.message}`;
     }
 
     private static readonly consoleTransport = new winston.transports.Console({
         format: winston.format.combine(
             winston.format.cli(),
-            winston.format.printf(Logger.logFormatTemplate),
+            winston.format.printf(Logger.logConsoleFormat),
         ),
     });
 
     private static readonly fileTransport = new winston.transports.File({
         format: winston.format.combine(
-            winston.format.printf(Logger.logFormatTemplate),
+            winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+            winston.format.printf(Logger.logFileFormat),
         ),
         filename: resolve("./debug.log"),
         level: "debug"
